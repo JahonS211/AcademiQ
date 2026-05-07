@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.16), transparent 36%),
+    radial-gradient(circle at 80% 10%, rgba(124, 58, 237, 0.2), transparent 38%),
+    radial-gradient(circle at 50% 90%, rgba(59, 130, 246, 0.08), transparent 40%);
+  z-index: -1;
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-brandA to-brandB bg-clip-text text-transparent;
+}
+
+.card {
+  @apply rounded-3xl border border-slate-200/50 bg-white/70 p-6 shadow-xl shadow-brandA/5 backdrop-blur-xl dark:border-slate-800/50 dark:bg-slate-900/60 dark:shadow-brandB/5;
+}
+
+.btn-primary {
+  @apply rounded-xl bg-gradient-to-r from-brandA via-brandB to-brandB px-5 py-2.5 font-medium text-white shadow-lg shadow-brandB/20 transition-all hover:shadow-brandA/40 active:scale-95 disabled:opacity-60;
+  background-size: 200% auto;
+}
+
+.btn-primary:hover {
+  background-position: right center;
+}
+
+.input {
+  @apply w-full rounded-xl border border-slate-300/50 bg-white/50 px-4 py-3 outline-none backdrop-blur-md transition-all focus:border-brandA focus:ring-4 focus:ring-brandA/10 dark:border-slate-700/50 dark:bg-slate-900/50 dark:focus:ring-brandA/20;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
