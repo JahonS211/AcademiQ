@@ -82,7 +82,7 @@ export default function Sidebar() {
   const getPhotoUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-api-hsvi.onrender.com";
     return `${base}${path.startsWith("/") ? path : '/' + path}`;
   };
 

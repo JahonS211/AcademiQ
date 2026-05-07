@@ -31,7 +31,7 @@ export default function AdminPanelPage() {
 
   const fetchUsers = async (token) => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/admin/manage/users", {
+      const { data } = await axios.get("https://academiq-api-hsvi.onrender.com/api/admin/manage/users", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data.users);
@@ -43,7 +43,7 @@ export default function AdminPanelPage() {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/admin/manage/users/${editingUser._id}`, editingUser, {
+      await axios.put(`https://academiq-api-hsvi.onrender.com/api/admin/manage/users/${editingUser._id}`, editingUser, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       toast.success("Muvaffaqiyatli saqlandi");
@@ -57,7 +57,7 @@ export default function AdminPanelPage() {
   const handleDeleteUser = async (id) => {
     if (!confirm("Haqiqatdan ham o'chirmoqchimisiz?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/admin/manage/users/${id}`, {
+      await axios.delete(`https://academiq-api-hsvi.onrender.com/api/admin/manage/users/${id}`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       toast.success("O'chirildi");
@@ -69,7 +69,7 @@ export default function AdminPanelPage() {
 
   const handleBlockUser = async () => {
     try {
-      await axios.post(`http://localhost:5000/api/admin/manage/users/${blockingUser._id}/block`, {
+      await axios.post(`https://academiq-api-hsvi.onrender.com/api/admin/manage/users/${blockingUser._id}/block`, {
         isBlocked: true,
         blockedUntil: blockingUser.blockedUntil
       }, {
@@ -85,7 +85,7 @@ export default function AdminPanelPage() {
 
   const handleUnblock = async (id) => {
     try {
-      await axios.post(`http://localhost:5000/api/admin/manage/users/${id}/block`, {
+      await axios.post(`https://academiq-api-hsvi.onrender.com/api/admin/manage/users/${id}/block`, {
         isBlocked: false
       }, {
         headers: { Authorization: `Bearer ${adminToken}` }

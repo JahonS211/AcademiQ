@@ -17,7 +17,7 @@ import {
   Bar,
 } from "recharts";
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-api-hsvi.onrender.com";
 
 function Card({ title, value, sub }) {
   return (

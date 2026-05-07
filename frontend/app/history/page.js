@@ -21,8 +21,8 @@ export default function HistoryPage() {
       setLoading(true);
       try {
         const endpoint = activeTab === "payment" 
-          ? "http://localhost:5000/api/payment/history" 
-          : "http://localhost:5000/api/rewards/me";
+          ? "https://academiq-api-hsvi.onrender.com/api/payment/history" 
+          : "https://academiq-api-hsvi.onrender.com/api/rewards/me";
         const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });

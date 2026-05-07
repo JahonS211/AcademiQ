@@ -16,7 +16,7 @@ export default function PresentationsPage() {
 
   const fetchPresentations = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/presentations");
+      const { data } = await axios.get("https://academiq-api-hsvi.onrender.com/api/presentations");
       setPresentations(data.presentations || []);
     } catch (err) {
       console.error(err);
@@ -32,7 +32,7 @@ export default function PresentationsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/presentations/generate", 
+      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/presentations/generate", 
         { topic, language: "uz" },
         { headers: { Authorization: `Bearer ${token}` } }
       );

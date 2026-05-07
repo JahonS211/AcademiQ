@@ -21,7 +21,7 @@ export default function TranslatorPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/translate", 
+      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/translate", 
         { text, targetLanguage },
         { headers: { Authorization: `Bearer ${token}` } }
       );

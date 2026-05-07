@@ -25,7 +25,7 @@ export default function TestsPage() {
     setUserAnswers({});
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/tests/generate", 
+      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/tests/generate", 
         { topic, language: "uz" },
         { headers: { Authorization: `Bearer ${token}` } }
       );

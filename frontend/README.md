@@ -28,7 +28,7 @@ Open `http://localhost:3000`.
 
 Frontend reads backend base URL from:
 
-- `NEXT_PUBLIC_API_BASE_URL` (default: `http://localhost:5000`)
+- `NEXT_PUBLIC_API_BASE_URL` (default: `https://academiq-api-hsvi.onrender.com`)
 
 Integrated endpoints:
 
