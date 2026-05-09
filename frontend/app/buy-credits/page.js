@@ -48,7 +48,7 @@ export default function BuyCreditsPage() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("academiq-production-0920.up.railway.app/api/auth/profile", {
+          const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/auth/profile", {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (data.success) setUser(data.user);
@@ -59,7 +59,7 @@ export default function BuyCreditsPage() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("academiq-production-0920.up.railway.app/api/payment/history", {
+          const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/payment/history", {
             headers: { Authorization: `Bearer ${token}` }
           });
           setHistory(data.history || []);
@@ -104,7 +104,7 @@ export default function BuyCreditsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("academiq-production-0920.up.railway.app/api/payment/create", {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/payment/create", {
         type: "credits",
         amount: finalAmount,
         promoCode: promoInfo?.code || promoCode || "",
@@ -130,7 +130,7 @@ export default function BuyCreditsPage() {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data } = await axios.get(`academiq-production-0920.up.railway.app/api/payment/status/${code}`, {
+        const { data } = await axios.get(`https://academiq-production-0920.up.railway.app/api/payment/status/${code}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -159,7 +159,7 @@ export default function BuyCreditsPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("academiq-production-0920.up.railway.app/api/payment/upload-receipt", formData, {
+      await axios.post("https://academiq-production-0920.up.railway.app/api/payment/upload-receipt", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"

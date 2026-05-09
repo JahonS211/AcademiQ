@@ -21,7 +21,7 @@ export default function AdminSettingsPage() {
   const fetchPromos = async () => {
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.get("academiq-production-0920.up.railway.app/api/admin/promo", {
+      const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/admin/promo", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPromos(data.promos || []);
@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("academiq-production-0920.up.railway.app/api/admin/promo", newPromo, {
+      await axios.post("https://academiq-production-0920.up.railway.app/api/admin/promo", newPromo, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Promokod yaratildi!");
@@ -58,7 +58,7 @@ export default function AdminSettingsPage() {
     if (!window.confirm("Rostdan ham o'chirmoqchimisiz?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`academiq-production-0920.up.railway.app/api/admin/promo/${id}`, {
+      await axios.delete(`https://academiq-production-0920.up.railway.app/api/admin/promo/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("O'chirildi!");
