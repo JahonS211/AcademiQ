@@ -50,7 +50,7 @@ export default function Sidebar() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("https://academiq-production-0920.up.railway.app//api/auth/profile", {
+          const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/auth/profile", {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (data && (data.success || data.user)) {

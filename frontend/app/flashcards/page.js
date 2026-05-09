@@ -50,7 +50,7 @@ export default function FlashcardsPage() {
     setFlipped({});
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/flashcards", {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/flashcards", {
         topic, count, language
       }, {
         headers: { Authorization: `Bearer ${token}` }

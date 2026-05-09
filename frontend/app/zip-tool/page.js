@@ -45,7 +45,7 @@ export default function ZipToolPage() {
       const formData = new FormData();
       files.forEach(f => formData.append("files", f));
 
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/compress", formData, {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/compress", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"

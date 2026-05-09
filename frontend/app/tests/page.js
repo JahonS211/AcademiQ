@@ -52,7 +52,7 @@ export default function TestsPage() {
     setUserAnswers({});
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/tests/generate", 
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/tests/generate", 
         { topic, language, questionCount },
         { headers: { Authorization: `Bearer ${token}` } }
       );

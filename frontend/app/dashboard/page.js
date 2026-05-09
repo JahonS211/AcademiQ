@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.get("https://academiq-production-0920.up.railway.app//api/auth/profile", {
+      const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/auth/profile", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(data.user);
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       formData.append("name", newName);
       if (photo) formData.append("photo", photo);
 
-      await axios.post("https://academiq-production-0920.up.railway.app//api/auth/profile", formData, {
+      await axios.post("https://academiq-production-0920.up.railway.app/api/auth/profile", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -70,7 +70,7 @@ export default function DashboardPage() {
     setPwdLoading(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-production-0920.up.railway.app//api/auth/change-password", {
+      await axios.post("https://academiq-production-0920.up.railway.app/api/auth/change-password", {
         currentPassword, newPassword
       }, {
         headers: { Authorization: `Bearer ${token}` }

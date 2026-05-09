@@ -102,7 +102,7 @@ export default function HomeworkSolverPage() {
     setSolution("");
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/homework-solver", {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/homework-solver", {
         question, subject, language
       }, {
         headers: { Authorization: `Bearer ${token}` }

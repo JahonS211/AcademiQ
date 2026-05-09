@@ -48,7 +48,7 @@ export default function ToolsPage() {
       if (type === "ocr") endpoint = "image-to-text";
       if (type === "compress") endpoint = "compress";
 
-      const { data } = await axios.post(`https://academiq-production-0920.up.railway.app//api/${endpoint}`, formData, {
+      const { data } = await axios.post(`https://academiq-production-0920.up.railway.app/api/${endpoint}`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"

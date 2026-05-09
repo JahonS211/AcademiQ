@@ -203,7 +203,7 @@ export default function ChatPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/chat", {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/chat", {
         message: currentInput,
         language: language,
         history: messages.slice(-10) 

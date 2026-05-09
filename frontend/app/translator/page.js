@@ -25,7 +25,7 @@ export default function TranslatorPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/translate", 
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/translate", 
         { text, targetLanguage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
