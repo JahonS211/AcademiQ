@@ -14,7 +14,7 @@ export default function Providers({ children }) {
     const timer = setTimeout(() => setLoading(false), 1500);
 
     // Check server connection
-    fetch("http://localhost:5000/health").catch(() => {
+    fetch("https://academiq-production-0920.up.railway.app//health").catch(() => {
       console.warn("Backend server is offline. Please start it with 'npm run dev' in the root directory.");
     });
 

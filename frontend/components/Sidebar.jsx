@@ -50,7 +50,7 @@ export default function Sidebar() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("http://localhost:5000/api/auth/profile", {
+          const { data } = await axios.get("https://academiq-production-0920.up.railway.app//api/auth/profile", {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (data && (data.success || data.user)) {
@@ -106,7 +106,7 @@ export default function Sidebar() {
   const getPhotoUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-production-0920.up.railway.app/";
     return `${base}${path.startsWith("/") ? path : '/' + path}`;
   };
 

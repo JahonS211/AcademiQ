@@ -27,7 +27,7 @@ export default function PresentationsPage() {
 
   const fetchPresentations = async () => {
     try {
-      const { data } = await axios.get("http://localhost:5000/api/presentations");
+      const { data } = await axios.get("https://academiq-production-0920.up.railway.app//api/presentations");
       setPresentations(data.presentations || []);
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ export default function PresentationsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/presentations/generate", 
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/presentations/generate", 
         { topic, language },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -52,7 +52,7 @@ export default function PresentationsPage() {
       syncUserCredits(data.remainingCredits);
       fetchPresentations();
       // Auto-download
-      window.open(`http://localhost:5000${data.presentation.fileUrl}`, "_blank");
+      window.open(`https://academiq-production-0920.up.railway.app/${data.presentation.fileUrl}`, "_blank");
     } catch (err) {
       const msg = err.response?.data?.message || "Xatolik yuz berdi";
       if (msg.toLowerCase().includes("kredit") || msg.toLowerCase().includes("credit")) {
@@ -129,7 +129,7 @@ export default function PresentationsPage() {
               <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <span className="text-[9px] text-slate-400 font-bold">{new Date(item.createdAt).toLocaleDateString()}</span>
                 <a 
-                  href={`http://localhost:5000${item.fileUrl}`} 
+                  href={`https://academiq-production-0920.up.railway.app/${item.fileUrl}`} 
                   target="_blank" 
                   className="text-brandA font-black text-[10px] uppercase tracking-widest hover:underline"
                 >

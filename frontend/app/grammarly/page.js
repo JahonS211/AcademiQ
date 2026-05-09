@@ -33,7 +33,7 @@ export default function GrammarlyPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/grammarly/check", {
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/grammarly/check", {
         text,
         language
       }, {

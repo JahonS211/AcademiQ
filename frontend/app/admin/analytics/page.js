@@ -20,7 +20,7 @@ import {
   FiHome, FiUsers, FiCreditCard, FiZap, FiGift, FiRotateCcw, FiClock, FiDollarSign, FiSearch, FiExternalLink, FiBarChart2, FiCheckCircle
 } from "react-icons/fi";
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "academiq-production-0920.up.railway.app";
 
 function Card({ title, value, sub, icon }) {
   return (

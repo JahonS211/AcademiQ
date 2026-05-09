@@ -21,9 +21,9 @@ export default function HistoryPage() {
       setLoading(true);
       try {
         let endpoint = "";
-        if (activeTab === "payment") endpoint = "http://localhost:5000/api/payment/history";
-        else if (activeTab === "reward") endpoint = "http://localhost:5000/api/rewards/me";
-        else if (activeTab === "credits") endpoint = "http://localhost:5000/api/payment/credits/history";
+        if (activeTab === "payment") endpoint = "https://academiq-production-0920.up.railway.app//api/payment/history";
+        else if (activeTab === "reward") endpoint = "https://academiq-production-0920.up.railway.app//api/rewards/me";
+        else if (activeTab === "credits") endpoint = "https://academiq-production-0920.up.railway.app//api/payment/credits/history";
 
         const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }

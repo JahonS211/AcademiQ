@@ -81,7 +81,7 @@ export default function PricingPage() {
 
     setLoading(plan);
     try {
-      const { data } = await axios.post("http://localhost:5000/api/payment/create", 
+      const { data } = await axios.post("https://academiq-production-0920.up.railway.app//api/payment/create", 
         { plan, promoCode: promoInfo?.code || promoCode || "", useRewards: overrideRewards }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -106,7 +106,7 @@ export default function PricingPage() {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data } = await axios.get(`http://localhost:5000/api/payment/status/${code}`, {
+        const { data } = await axios.get(`https://academiq-production-0920.up.railway.app//api/payment/status/${code}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -140,7 +140,7 @@ export default function PricingPage() {
     if (!supportMsg) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/payment/support", 
+      await axios.post("https://academiq-production-0920.up.railway.app//api/payment/support", 
         { message: supportMsg }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -166,7 +166,7 @@ export default function PricingPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("http://localhost:5000/api/payment/upload-receipt", formData, {
+      await axios.post("https://academiq-production-0920.up.railway.app//api/payment/upload-receipt", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"

@@ -39,7 +39,7 @@ export default function SupportPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}/api/support`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-production-0920.up.railway.app/"}/api/support`,
         { subject, message },
         { headers: { Authorization: `Bearer ${token}` } }
       );

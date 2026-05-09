@@ -27,7 +27,7 @@ export default function AiDetectorPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("http://localhost:5000/api/ai-detector/detect", {
+      const { data } = await axios.post("academiq-production-0920.up.railway.app/api/ai-detector/detect", {
         text
       }, {
         headers: { Authorization: `Bearer ${token}` }

@@ -48,7 +48,7 @@ export default function ToolsPage() {
       if (type === "ocr") endpoint = "image-to-text";
       if (type === "compress") endpoint = "compress";
 
-      const { data } = await axios.post(`http://localhost:5000/api/${endpoint}`, formData, {
+      const { data } = await axios.post(`https://academiq-production-0920.up.railway.app//api/${endpoint}`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -56,7 +56,7 @@ export default function ToolsPage() {
       });
 
       if (data.resultUrl) {
-        window.open(`http://localhost:5000${data.resultUrl}`, "_blank");
+        window.open(`https://academiq-production-0920.up.railway.app/${data.resultUrl}`, "_blank");
         toast.success(t("processSuccess"));
       } else if (data.extractedText) {
         setOcrResult(data.extractedText);
