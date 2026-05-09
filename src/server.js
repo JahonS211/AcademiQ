@@ -6,6 +6,14 @@ const http = require("http");
 const { initSocket } = require("./realtime/socket");
 const { startCronJobs } = require("./utils/cronJobs");
 
+app.get("/", (req, res) => {
+  res.json({ message: "AcademiQ backend is running ✅" });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "OK", message: "Backend working ✅" });
+});
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
