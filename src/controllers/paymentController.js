@@ -5,8 +5,9 @@ const { sendPaymentRequestToAdmin } = require("../utils/telegramBot");
 const PromoCode = require("../models/PromoCode");
 
 const PRICES = {
-  pro: 17990,
-  pro_plus: 27990,
+  pro: 14990,
+  pro_plus: 24990,
+  credit_unit: 100, // 100 UZS per credit
 };
 
 const multer = require("multer");
@@ -21,14 +22,43 @@ const upload = multer({ storage }).single("receipt");
 
 const createManualPayment = async (req, res, next) => {
   try {
-    const { plan, promoCode = "", useRewards = false } = req.body;
-    if (!PRICES[plan]) return res.status(400).json({ message: "Invalid plan" });
-
+    const { plan, promoCode = "", useRewards = false, type = "plan", amount: requestedAmount } = req.body;
+    
     const userId = req.user._id;
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const originalAmount = PRICES[plan];
+    let originalAmount = 0;
+    let creditAmount = 0;
+
+    if (type === "plan") {
+      if (!PRICES[plan]) return res.status(400).json({ message: "Invalid plan" });
+      if (user.planType === "pro_plus") {
+        return res.status(400).json({ message: "Sizda allaqachon eng yuqori tarif (Pro+) mavjud" });
+      }
+      if (user.planType === plan) {
+        return res.status(400).json({ message: `Sizda allaqachon ${plan.toUpperCase()} tarifi mavjud` });
+      }
+
+      originalAmount = PRICES[plan];
+      // Upgrade logic
+      if (user.planType === "pro" && plan === "pro_plus") {
+        const lastProPayment = await Payment.findOne({ 
+          userId, 
+          plan: "pro", 
+          status: "paid" 
+        }).sort({ createdAt: -1 });
+        const paidAmount = lastProPayment ? lastProPayment.amount : PRICES["pro"];
+        originalAmount = Math.max(PRICES["pro_plus"] - paidAmount, 0);
+      }
+    } else if (type === "credits") {
+      creditAmount = Number(requestedAmount);
+      if (!creditAmount || creditAmount <= 0) return res.status(400).json({ message: "Kredit miqdorini kiriting" });
+      originalAmount = creditAmount * PRICES.credit_unit;
+    } else {
+      return res.status(400).json({ message: "Invalid payment type" });
+    }
+
     let discountPercent = 0;
     let normalizedPromo = "";
 
@@ -36,12 +66,26 @@ const createManualPayment = async (req, res, next) => {
       normalizedPromo = String(promoCode).trim().toUpperCase();
       const promo = await PromoCode.findOne({ code: normalizedPromo, active: true });
       if (!promo) return res.status(400).json({ message: "Invalid promo code" });
+      
+      // Check if promo type matches
+      if (promo.type !== "both" && promo.type !== type) {
+        return res.status(400).json({ message: `Ushbu promo-kod faqat ${promo.type === 'plan' ? 'tariflar' : 'kreditlar'} uchun amal qiladi` });
+      }
+
       if (promo.expiresAt && promo.expiresAt.getTime() < Date.now()) {
         return res.status(400).json({ message: "Promo code expired" });
       }
       if (promo.usageLimit > 0 && promo.usedCount >= promo.usageLimit) {
         return res.status(400).json({ message: "Promo code usage limit reached" });
       }
+
+      const alreadyUsed = await Payment.findOne({
+        userId: userId,
+        promoCode: normalizedPromo,
+        status: "paid"
+      });
+      if (alreadyUsed) return res.status(400).json({ message: "Siz ushbu promo-koddan foydalanib bo'lgansiz" });
+
       discountPercent = Number(promo.discountPercent || 0);
     }
 
@@ -61,7 +105,9 @@ const createManualPayment = async (req, res, next) => {
       promoCode: normalizedPromo,
       promoDiscountPercent: discountPercent,
       rewardsApplied,
-      plan,
+      type,
+      plan: type === "plan" ? plan : undefined,
+      creditAmount: type === "credits" ? creditAmount : 0,
       code,
       status: "pending",
     });
@@ -75,7 +121,9 @@ const createManualPayment = async (req, res, next) => {
         promoCode: payment.promoCode,
         promoDiscountPercent: payment.promoDiscountPercent,
         rewardsApplied: payment.rewardsApplied,
+        type: payment.type,
         plan: payment.plan,
+        creditAmount: payment.creditAmount,
         code: payment.code,
         status: payment.status,
       },

@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const Payment = require("../models/Payment");
 const Referral = require("../models/Referral");
+const CreditHistory = require("../models/CreditHistory");
+const RewardLedger = require("../models/RewardLedger");
 
 const overview = async (req, res, next) => {
   try {
@@ -12,6 +14,18 @@ const overview = async (req, res, next) => {
       { $group: { _id: null, revenue: { $sum: "$amount" } } },
     ]);
     const revenue = revenueAgg[0]?.revenue || 0;
+    
+    const creditsUsedAgg = await CreditHistory.aggregate([
+      { $group: { _id: null, total: { $sum: "$creditsUsed" } } }
+    ]);
+    const creditsUsed = creditsUsedAgg[0]?.total || 0;
+
+    const rewardsEarnedAgg = await RewardLedger.aggregate([
+      { $match: { type: "earn" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const rewardsEarned = rewardsEarnedAgg[0]?.total || 0;
+
     const referralTotal = await Referral.countDocuments({});
     const referralPaid = await Referral.countDocuments({ status: "paid" });
 
@@ -20,6 +34,8 @@ const overview = async (req, res, next) => {
       activeUsers,
       payments,
       revenue,
+      creditsUsed,
+      rewardsEarned,
       referralTotal,
       referralPaid,
     });
@@ -62,6 +78,45 @@ const growth = async (req, res, next) => {
   }
 };
 
+const resetAnalytics = async (req, res, next) => {
+  try {
+    // Delete payment history, credit history, and reward history
+    // We don't delete Users or Referrals, just the transactional history
+    await Payment.deleteMany({});
+    await CreditHistory.deleteMany({});
+    await RewardLedger.deleteMany({});
+    
+    return res.status(200).json({ success: true, message: "Analytics history reset successfully" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
+const detailedHistory = async (req, res, next) => {
+  try {
+    const limit = parseInt(req.query.limit || "50", 10);
+    
+    const payments = await Payment.find({ status: "paid" })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate("userId", "name email");
+
+    const credits = await CreditHistory.find({})
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate("userId", "name email");
+
+    const rewards = await RewardLedger.find({})
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate("userId", "name email");
+
+    return res.status(200).json({ payments, credits, rewards });
+  } catch (e) {
+    return next(e);
+  }
+};
+
 const paymentsStats = async (req, res, next) => {
   try {
     const topPlans = await Payment.aggregate([
@@ -85,5 +140,5 @@ const referralStats = async (req, res, next) => {
   }
 };
 
-module.exports = { overview, growth, paymentsStats, referralStats };
+module.exports = { overview, growth, paymentsStats, referralStats, resetAnalytics, detailedHistory };
 

@@ -1,0 +1,14 @@
+{
+  "ignore": [
+    "frontend/*",
+    "node_modules/*",
+    "scripts/*",
+    "uploads/*",
+    "*.json"
+  ],
+  "watch": [
+    "src/*",
+    ".env"
+  ],
+  "ext": "js,mjs,cjs,json"
+}

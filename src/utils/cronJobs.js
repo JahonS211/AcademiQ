@@ -3,35 +3,29 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 
 const startCronJobs = () => {
-  // Run daily at midnight
+  // Daily Credit Reset at Midnight
   cron.schedule("0 0 * * *", async () => {
-    console.log("Running daily subscription check...");
+    console.log("Running daily credit reset...");
     try {
-      const now = new Date();
-      const expiredUsers = await User.find({
-        subscriptionEndsAt: { $lt: now },
-        planType: { $in: ["pro", "pro_plus"] },
-      });
-
-      for (const user of expiredUsers) {
-        const oldPlan = user.planType;
-        user.planType = "free";
-        user.subscriptionEndsAt = null;
-        await user.save();
-
-        if (Notification) {
-          await Notification.create({
-            userId: user._id,
-            title: "Subscription Expired",
-            message: `Your ${oldPlan.replace("_", " ")} subscription has expired. You are now on the free plan.`,
-            type: "system",
-            isRead: false,
-          });
+      const PLAN_LIMITS = { free: 25, pro: 150, pro_plus: 500 };
+      const users = await User.find({});
+      
+      for (const user of users) {
+        // Handle subscription expiration first (already done above, but for clarity)
+        const now = new Date();
+        if (user.subscriptionEndsAt && user.subscriptionEndsAt < now) {
+            user.planType = "free";
+            user.subscriptionEndsAt = null;
         }
+
+        const limit = PLAN_LIMITS[user.planType] || PLAN_LIMITS.free;
+        user.credits = limit;
+        user.lastCreditReset = new Date();
+        await user.save();
       }
-      console.log(`Updated ${expiredUsers.length} expired subscriptions.`);
+      console.log("Daily credit reset completed.");
     } catch (error) {
-      console.error("Cron Job Error:", error);
+      console.error("Credit Reset Cron Error:", error);
     }
   });
 };

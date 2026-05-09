@@ -96,6 +96,15 @@ export default function RegisterPage() {
             required 
           />
         </div>
+        <div className="flex items-center justify-between mt-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="w-4 h-4 rounded text-brandA focus:ring-brandA/20 bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700" 
+            />
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Meni eslab qolish</span>
+          </label>
+        </div>
         
         <button 
           className="btn-primary w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-brandA/20 transition-all hover:scale-[1.02] mt-2" 

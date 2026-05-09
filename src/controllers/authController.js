@@ -7,6 +7,8 @@ const signToken = (payload) =>
     expiresIn: process.env.JWT_EXPIRES_IN || "7d",
   });
 
+// Legacy coin logic removed. Credits are reset via cronJob.
+
 const register = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -34,7 +36,9 @@ const register = async (req, res, next) => {
         name: user.name,
         profilePhoto: user.profilePhoto,
         planType: user.planType,
-        dailyEssayCount: user.dailyEssayCount,
+        credits: user.credits,
+        isUnlimitedCredits: user.isUnlimitedCredits,
+        rewardBalance: user.rewardBalance,
         createdAt: user.createdAt,
         role: "user"
       },
@@ -96,7 +100,9 @@ const login = async (req, res, next) => {
         name: user.name,
         profilePhoto: user.profilePhoto,
         planType: user.planType,
-        dailyEssayCount: user.dailyEssayCount,
+        credits: user.credits,
+        isUnlimitedCredits: user.isUnlimitedCredits,
+        rewardBalance: user.rewardBalance,
         createdAt: user.createdAt,
         role: "user",
       },
@@ -191,7 +197,9 @@ const googleLogin = async (req, res, next) => {
         name: user.name,
         profilePhoto: user.profilePhoto,
         planType: user.planType,
-        dailyEssayCount: user.dailyEssayCount,
+        credits: user.credits,
+        isUnlimitedCredits: user.isUnlimitedCredits,
+        rewardBalance: user.rewardBalance,
         createdAt: user.createdAt,
         role: "user"
       },
@@ -213,28 +221,53 @@ const upload = multer({ storage }).single("photo");
 
 const getProfile = async (req, res, next) => {
   try {
+    // If it's a virtual admin, return hardcoded profile
+    if (req.user.isVirtual) {
+      return res.status(200).json({
+        user: {
+          id: "admin",
+          email: req.user.email,
+          name: "Admin",
+          role: "admin",
+          planType: "pro_plus",
+          dailyCoinsUsed: 0,
+          hasPassword: true,
+          stats: {
+            essays: 0,
+            presentations: 0,
+          }
+        }
+      });
+    }
+
     const user = await User.findById(req.user.id || req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
     
     // Calculate stats
     const Essay = require("../models/Essay");
     const Presentation = require("../models/Presentation");
-    const essayCount = await Essay.countDocuments({ userId: user._id });
-    const presentationCount = await Presentation.countDocuments({ userId: user._id });
+    const stats = {
+      essays: await Essay.countDocuments({ userId: user._id }),
+      presentations: await Presentation.countDocuments({ userId: user._id }),
+      tools: user.totalCreditsUsed || 0,
+    };
 
     return res.status(200).json({
+      success: true,
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
         profilePhoto: user.profilePhoto,
         planType: user.planType,
-        stats: {
-          essays: essayCount,
-          presentations: presentationCount,
-          tools: user.dailyToolsCount
-        }
-      }
+        credits: user.credits,
+        isUnlimitedCredits: user.isUnlimitedCredits,
+        rewardBalance: user.rewardBalance,
+        totalCreditsUsed: user.totalCreditsUsed,
+        hasPassword: !!user.password,
+        role: user.role,
+        stats,
+      },
     });
   } catch (error) {
     return next(error);
@@ -260,11 +293,41 @@ const updateProfile = async (req, res, next) => {
   });
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id || req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // If user has no password (e.g. Google Auth), they can't change it
+    if (!user.password) {
+      return res.status(400).json({ message: "Google orqali ro'yxatdan o'tgansiz, parolingiz yo'q." });
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Joriy va yangi parolni kiriting." });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Joriy parol noto'g'ri." });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Parol muvaffaqiyatli o'zgartirildi" });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   adminLogin,
   googleLogin,
   getProfile,
-  updateProfile
+  updateProfile,
+  changePassword
 };

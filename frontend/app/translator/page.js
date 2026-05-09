@@ -4,9 +4,12 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { FiCopy, FiArrowRight, FiZap } from "react-icons/fi";
+import { FiCopy, FiArrowRight, FiZap, FiTrash2 } from "react-icons/fi";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
+import { syncUserCredits } from "../../lib/syncUtils";
+import CustomSelect from "../../components/CustomSelect";
+import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
 
 export default function TranslatorPage() {
   const { t } = useI18n();
@@ -15,23 +18,35 @@ export default function TranslatorPage() {
   const [targetLanguage, setTargetLanguage] = useState("English");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCreditModal, setShowCreditModal] = useState(false);
 
   const handleTranslate = async () => {
     if (!text) return toast.error(t("enterText"));
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/translate", 
+      const { data } = await axios.post("http://localhost:5000/api/translate", 
         { text, targetLanguage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setResult(data.translatedText);
+      syncUserCredits(data.remainingCredits);
       toast.success(t("processSuccess"));
     } catch (err) {
-      toast.error(t("processFailed"));
+      const msg = err.response?.data?.message || t("processFailed");
+      if (msg.toLowerCase().includes("kredit") || msg.toLowerCase().includes("credit")) {
+        setShowCreditModal(true);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClear = () => {
+    setText("");
+    setResult("");
   };
 
   if (!ready) return null;
@@ -41,7 +56,7 @@ export default function TranslatorPage() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card p-8 border-brandA/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl"
+        className="card p-8 border-brandA/10 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl overflow-visible"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
@@ -49,21 +64,20 @@ export default function TranslatorPage() {
               {t("translator")} AI
             </h1>
             <p className="text-sm text-slate-500 font-bold uppercase tracking-widest opacity-60">
-              Powered by Llama 3.1
+              Powered by Gemini 1.5 Flash
             </p>
           </div>
           
-          <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700">
-             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Target:</span>
-             <select 
-               className="bg-white dark:bg-slate-900 px-4 py-2 rounded-xl text-xs font-black tracking-widest text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 focus:ring-2 ring-indigo-500/20 transition-all outline-none"
+          <div className="w-64">
+             <CustomSelect 
+               label="Target Language"
                value={targetLanguage}
-               onChange={e => setTargetLanguage(e.target.value)}
-             >
-               {["O'zbek", "Ўзбек (Кирилл)", "Русский", "English", "Қазақша", "Türkçe", "Тоҷикӣ", "Кыргызча", "Türkmençe", "Español"].map(lang => (
-                 <option key={lang} value={lang} className="text-slate-900 dark:text-white bg-white dark:bg-slate-900">{lang}</option>
-               ))}
-             </select>
+               onChange={val => setTargetLanguage(val)}
+               options={["O'zbek", "Ўзбек (Кирилл)", "Русский", "English", "Қазақша", "Türkçe", "Тоҷикӣ", "Кыргызча", "Türkmençe", "Español"].map(lang => ({
+                 value: lang,
+                 label: lang
+               }))}
+             />
           </div>
         </div>
         
@@ -109,20 +123,37 @@ export default function TranslatorPage() {
           </div>
         </div>
 
-        <div className="mt-12 flex justify-center">
+        <div className="mt-12 flex flex-col sm:flex-row justify-center gap-3">
           <button 
             onClick={handleTranslate}
             disabled={loading}
-            className="btn-primary px-24 py-5 text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-brandA/30 rounded-2xl flex items-center gap-4 transition-all hover:scale-105 active:scale-95"
+            className="btn-primary px-24 py-5 text-xs font-black uppercase tracking-[0.3em] shadow-2xl shadow-brandA/30 rounded-2xl flex items-center gap-4 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
           >
             {loading ? (
               <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <><span>{t("translator")}</span> <FiZap /></>
+              <>
+                <span>{t("translator")}</span> 
+                <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                <span className="ml-2 px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter uppercase">1 {t("credits")}</span>
+              </>
             )}
           </button>
+          {(text || result) && (
+            <button
+              onClick={handleClear}
+              className="px-10 py-5 bg-rose-500/10 text-rose-500 rounded-2xl text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-rose-500 hover:text-white transition-all"
+            >
+              <FiTrash2 />
+              Tozalash
+            </button>
+          )}
         </div>
       </motion.div>
+      <InsufficientCreditsModal 
+        isOpen={showCreditModal} 
+        onClose={() => setShowCreditModal(false)} 
+      />
     </div>
   );
 }

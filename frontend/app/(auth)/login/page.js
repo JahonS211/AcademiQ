@@ -45,12 +45,12 @@ export default function LoginPage() {
         toast.success(t("loginSuccess"));
         router.push("/dashboard");
       } catch (err) {
-        toast.error("Google Login failed");
+        toast.error(t("googleLoginFailed"));
       } finally {
         setLoading(false);
       }
     },
-    onError: () => toast.error("Google Login failed"),
+    onError: () => toast.error(t("googleLoginFailed")),
   });
 
   return (
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
       <form className="space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email Address</label>
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">{t("emailAddress") || "Email Address"}</label>
           <input 
             className="input py-4 px-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-brandA/20 text-sm font-bold" 
             placeholder="example@gmail.com" 
@@ -82,6 +82,21 @@ export default function LoginPage() {
             onChange={(e) => setForm({ ...form, password: e.target.value })} 
             required 
           />
+        </div>
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input 
+                type="checkbox" 
+                className="peer sr-only" 
+              />
+              <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-md transition-all peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-600/50" />
+              <svg className="absolute inset-0 w-5 h-5 text-white scale-0 transition-transform peer-checked:scale-100 p-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover:text-slate-700 dark:group-hover:text-slate-300">{t("rememberMe")}</span>
+          </label>
         </div>
         
         <button 
@@ -104,7 +119,7 @@ export default function LoginPage() {
           className="w-full py-3.5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4 hover:bg-slate-50 transition-all shadow-sm group"
         >
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          <span className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">Continue with Google</span>
+          <span className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">{t("continueWithGoogle")}</span>
         </button>
 
         <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">

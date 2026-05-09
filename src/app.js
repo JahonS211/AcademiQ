@@ -13,6 +13,12 @@ const { login, register } = require("./controllers/authController");
 
 const app = express();
 
+// Ensure uploads directory exists
+const fs = require("fs");
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
+
 app.use(helmet({
   crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -24,7 +30,7 @@ app.use("/uploads", express.static("uploads"));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1000, // Increased for development
   message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
@@ -62,7 +68,14 @@ app.use("/api", presenceRoutes);
 app.use("/api/admin", adminAnalyticsRoutes);
 
 const supportRoutes = require("./routes/supportRoutes");
+const chatRoutes = require("./routes/chatRoutes");
+const studyRoutes = require("./routes/studyRoutes");
+const aiToolsRoutes = require("./routes/aiToolsRoutes");
+
 app.use("/api", supportRoutes);
+app.use("/api", chatRoutes);
+app.use("/api", studyRoutes);
+app.use("/api", aiToolsRoutes);
 
 
 app.use((req, res) => {

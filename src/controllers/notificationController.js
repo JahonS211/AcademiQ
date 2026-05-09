@@ -68,10 +68,41 @@ const createAnnouncement = async (req, res, next) => {
   }
 };
 
+const deleteNotification = async (req, res, next) => {
+  try {
+    const n = await Notification.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    if (!n) return res.status(404).json({ message: "Notification not found" });
+    return res.status(200).json({ success: true, message: "Notification deleted" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
+const clearNotifications = async (req, res, next) => {
+  try {
+    await Notification.deleteMany({ userId: req.user._id });
+    return res.status(200).json({ success: true, message: "All notifications cleared" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
+const markAllAsRead = async (req, res, next) => {
+  try {
+    await Notification.updateMany({ userId: req.user._id, read: false }, { read: true });
+    return res.status(200).json({ success: true, message: "All notifications marked as read" });
+  } catch (e) {
+    return next(e);
+  }
+};
+
 module.exports = {
   listNotifications,
   getUnreadCount,
   readNotification,
   createAnnouncement,
+  deleteNotification,
+  clearNotifications,
+  markAllAsRead,
 };
 

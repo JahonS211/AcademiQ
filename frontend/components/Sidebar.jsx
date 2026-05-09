@@ -4,14 +4,20 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "../lib/i18n";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import axios from "axios";
 import ThemeToggle from "./ThemeToggle";
 import LanguageSwitcher from "./LanguageSwitcher";
 import NotificationsDropdown from "./NotificationsDropdown";
+import { Progress } from "./Progress";
 import { 
   FiHome, FiEdit3, FiTool, FiPieChart, FiFileText, 
   FiGift, FiGlobe, FiMessageSquare, FiHeart, FiStar, 
-  FiSettings, FiUsers, FiLogOut, FiClock, FiSidebar
+  FiSettings, FiUsers, FiLogOut, FiClock, FiSidebar,
+  FiChevronUp, FiChevronDown, FiCreditCard, FiBell, FiUser, FiHelpCircle, FiZap, FiLock, FiBookOpen,
+  FiCheckCircle, FiSearch, FiArchive
 } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PLAN_CONFIG = {
   free:     { label: "FREE",    color: "from-slate-400 to-slate-500",    glow: "shadow-slate-400/30",  ring: "ring-slate-300" },
@@ -27,6 +33,7 @@ export default function Sidebar() {
   const [token, setToken] = useState(null);
   const [imgErr, setImgErr] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebarOpen");
@@ -34,14 +41,33 @@ export default function Sidebar() {
   }, []);
 
   useEffect(() => {
-    const syncUser = () => {
+    const syncUser = async () => {
       const savedUser = localStorage.getItem("user");
       if (savedUser) { setUser(JSON.parse(savedUser)); setImgErr(false); }
       setToken(localStorage.getItem("token"));
+
+      // Refresh from server to catch admin updates
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          const { data } = await axios.get("http://localhost:5000/api/auth/profile", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (data && (data.success || data.user)) {
+            const userData = data.user || data;
+            localStorage.setItem("user", JSON.stringify(userData));
+            setUser(userData);
+          }
+        } catch (e) { console.error("Profile sync failed", e); }
+      }
     };
     syncUser();
     window.addEventListener("storage", syncUser);
-    return () => window.removeEventListener("storage", syncUser);
+    window.addEventListener("creditsUpdated", syncUser);
+    return () => {
+      window.removeEventListener("storage", syncUser);
+      window.removeEventListener("creditsUpdated", syncUser);
+    };
   }, [pathname]);
 
   const toggleSidebar = () => {
@@ -52,37 +78,35 @@ export default function Sidebar() {
   };
 
   const links = [
-    { href: "/dashboard",       label: t("dashboard"),      icon: <FiHome className="w-5 h-5" /> },
-    { href: "/essay-generator", label: t("essay"),           icon: <FiEdit3 className="w-5 h-5" /> },
-    { href: "/tools",           label: t("tools"),           icon: <FiTool className="w-5 h-5" /> },
-    { href: "/presentations",   label: t("presentations"),   icon: <FiPieChart className="w-5 h-5" /> },
-    { href: "/tests",           label: t("tests"),           icon: <FiFileText className="w-5 h-5" /> },
-    { href: "/translator",      label: "Tarjimon",           icon: <FiGlobe className="w-5 h-5" /> },
-    { href: "/history",         label: "Tarix",              icon: <FiClock className="w-5 h-5" /> },
-    { href: "/donat",           label: "Donat",              icon: <FiHeart className="w-5 h-5" /> },
-    { href: "/pricing",         label: "Premium",            icon: <FiStar className="w-5 h-5" /> },
-    { href: "/referrals",       label: "Referrals",          icon: <FiGift className="w-5 h-5" /> },
-    { href: "/support",         label: "Yordam",             icon: <FiMessageSquare className="w-5 h-5" /> },
+    { href: "/chat",            label: t("Chat") || "AI Chat",   icon: <FiMessageSquare className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/essay-generator", label: t("essay"),           icon: <FiEdit3 className="w-5 h-5" />, allowedPlans: ["free", "pro", "pro_plus"] },
+    { href: "/tools",           label: "AI Tools",           icon: <FiZap className="w-5 h-5" />,          allowedPlans: ["pro", "pro_plus"] },
+    { href: "/presentations",   label: t("presentations"),   icon: <FiPieChart className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/tests",           label: t("tests"),           icon: <FiFileText className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/translator",      label: t("translator"),      icon: <FiGlobe className="w-5 h-5" />, allowedPlans: ["free", "pro", "pro_plus"] },
+    { href: "/donat",           label: t("donat"),           icon: <FiHeart className="w-5 h-5" />, allowedPlans: ["free", "pro", "pro_plus"] },
+    { href: "/referrals",       label: t("referrals"),       icon: <FiGift className="w-5 h-5" />, allowedPlans: ["free", "pro", "pro_plus"] },
+    { href: "/support",         label: t("support"),         icon: <FiHelpCircle className="w-5 h-5" />, allowedPlans: ["free", "pro", "pro_plus"] },
   ];
   
   const adminLinks = [
-    { href: "/admin/panel", label: "Foydalanuvchilar", icon: <FiUsers className="w-5 h-5" /> },
-    { href: "/admin/analytics", label: "Analitika", icon: <FiPieChart className="w-5 h-5" /> },
-    { href: "/history", label: "Tarix", icon: <FiClock className="w-5 h-5" /> },
-    { href: "/admin/settings", label: "Sozlamalar", icon: <FiSettings className="w-5 h-5" /> },
+    { href: "/admin/panel", label: t("users"), icon: <FiUsers className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/admin/analytics", label: t("analytics"), icon: <FiPieChart className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/history", label: t("history"), icon: <FiClock className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
+    { href: "/admin/settings", label: t("settings"), icon: <FiSettings className="w-5 h-5" />, allowedPlans: ["pro", "pro_plus"] },
   ];
 
   const logout = () => {
-    localStorage.clear();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setToken(null); setUser(null);
-    router.push("/");
-    setTimeout(() => window.location.reload(), 100);
+    window.location.href = "/";
   };
 
   const getPhotoUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-api-hsvi.onrender.com";
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
     return `${base}${path.startsWith("/") ? path : '/' + path}`;
   };
 
@@ -94,6 +118,14 @@ export default function Sidebar() {
   const initials = displayName.slice(0, 2).toUpperCase();
   const photoUrl = user?.profilePhoto ? getPhotoUrl(user.profilePhoto) : null;
   const activeLinks = user?.role === "admin" ? adminLinks : links;
+
+  const handleLinkClick = (e, link) => {
+    if (user?.role !== "admin" && !link.allowedPlans.includes(plan)) {
+      e.preventDefault();
+      router.push("/pricing");
+      toast.error("Iltimos, ushbu xizmatdan foydalanish uchun tarifingizni yangilang.");
+    }
+  };
 
   return (
     <>
@@ -153,24 +185,42 @@ export default function Sidebar() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-6 space-y-2 px-3">
         {activeLinks.map((link) => {
           const isActive = pathname === link.href;
+          const isRestricted = user?.role !== "admin" && !link.allowedPlans.includes(plan);
+
           return (
             <Link
               key={link.href}
               href={link.href}
+              onClick={(e) => {
+                handleLinkClick(e, link);
+                if (window.innerWidth < 768) setIsOpen(false);
+              }}
               title={link.label}
-              className={`flex items-center gap-4 rounded-lg px-3 py-3 transition-colors duration-200 ${
+              className={`flex items-center gap-4 rounded-lg px-3 py-3 transition-colors duration-200 relative group ${
                 isActive
                   ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                  : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  : isRestricted 
+                    ? "text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                    : "text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
               }`}
             >
               <div className="shrink-0 flex items-center justify-center text-xl">
                 {link.icon}
               </div>
               {isOpen && (
-                <span className="font-medium text-sm whitespace-nowrap">
-                  {link.label}
-                </span>
+                <div className="flex-1 flex items-center justify-between min-w-0">
+                  <span className="font-medium text-sm whitespace-nowrap">
+                    {link.label}
+                  </span>
+                  {isRestricted && (
+                    <FiLock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 ml-2" />
+                  )}
+                </div>
+              )}
+              {!isOpen && isRestricted && (
+                <div className="absolute top-1 right-1">
+                  <FiLock className="w-2.5 h-2.5 text-slate-400 dark:text-slate-600" />
+                </div>
               )}
             </Link>
           );
@@ -179,40 +229,161 @@ export default function Sidebar() {
 
       {/* Bottom Controls */}
       <div className={`shrink-0 border-t border-slate-200 dark:border-slate-800 ${isOpen ? "p-3" : "py-3 px-2"} flex flex-col gap-3 relative z-50`}>
-        {/* User Card */}
-        <div className={`flex items-center gap-3 ${isOpen ? "px-2" : "justify-center"}`}>
-           <div className={`relative shrink-0 w-10 h-10 rounded-full overflow-hidden border-2 ${planConf.ring}`}>
-              {photoUrl && !imgErr ? (
-                <img src={photoUrl} alt={displayName} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
-              ) : (
-                <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${planConf.color} text-white font-bold text-sm`}>
-                  {initials}
+        {isOpen && (
+           <div className="flex items-center justify-between px-2 mb-1">
+             <LanguageSwitcher />
+             <ThemeToggle />
+           </div>
+        )}
+        
+        {/* Progress Bar for Credits */}
+        {isOpen && user && (
+          <div className="px-3 mb-2 space-y-3">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {t("credits") || "Kreditlar"}
+              </span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">
+                <FiZap className="w-2.5 h-2.5" />
+                <span className="text-[10px] font-black">{user.credits ?? 0} {t("creditsLeft") || "Bor"}</span>
+              </div>
+            </div>
+            
+            {user.isUnlimitedCredits ? (
+              <div className="space-y-2">
+                <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <motion.div 
+                    animate={{ 
+                      x: ["-100%", "100%"]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="h-full w-full bg-gradient-to-r from-transparent via-brandA to-transparent opacity-50"
+                  />
+                </div>
+                <p className="text-[8px] font-black text-brandA uppercase tracking-tighter text-center animate-pulse">{t("premiumUnlimited") || "Premium Unlimited Active ✨"}</p>
+              </div>
+            ) : (() => {
+              const plan = user.planType || "free";
+              const max = plan === "free" ? 25 : plan === "pro" ? 150 : 500;
+              const remaining = user.credits ?? 0;
+              const percentage = Math.min(100, (remaining / max) * 100);
+              
+              return (
+                <div className="space-y-1.5">
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percentage}%` }}
+                      className={`h-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_8px_rgba(16,185,129,0.3)]`}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[8px] font-black text-slate-400 uppercase tracking-widest px-0.5">
+                    <span>0</span>
+                    <span>{max} MAX</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        <div className="relative w-full">
+          {/* Popover Menu */}
+          <AnimatePresence>
+            {isUserMenuOpen && isOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-visible z-[200]"
+              >
+                <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                  <div className={`relative shrink-0 w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-xs`}>
+                    {initials}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{displayName}</span>
+                    <span className="text-[10px] text-slate-500 truncate">{user?.email}</span>
+                  </div>
+                </div>
+                
+                  <div className="p-3 bg-brandA/[0.03] dark:bg-brandA/10 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Balans</span>
+                      <span className="text-xs font-black text-brandA">{user?.credits ?? 0} Credits</span>
+                    </div>
+                    <Link 
+                      href="/buy-credits" 
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="w-full py-2.5 bg-brandA text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brandA/20 hover:scale-[1.02] active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                    >
+                      <FiZap className="w-3 h-3" />
+                      Kredit sotib olish
+                    </Link>
+                  </div>
+
+                  <div className="p-1.5 flex flex-col gap-0.5">
+                    <Link href="/dashboard" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                      <FiUser className="w-4 h-4" />
+                      <span>Account</span>
+                    </Link>
+                    <Link href="/pricing" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                      <FiStar className="w-4 h-4 text-amber-500" />
+                      <span>Upgrade Plan</span>
+                    </Link>
+                    <Link href="/buy-credits" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-sm font-medium transition-colors">
+                      <FiCreditCard className="w-4 h-4" />
+                      <span>Billing</span>
+                    </Link>
+                    <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-slate-300 text-sm font-medium">
+                      <NotificationsDropdown />
+                      <span>Notifications</span>
+                    </div>
+                  </div>
+                
+                <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                
+                <div className="p-1.5">
+                  <button onClick={logout} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium transition-colors">
+                    <FiLogOut className="w-4 h-4" />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* User Button */}
+          <button 
+            onClick={() => isOpen ? setIsUserMenuOpen(!isUserMenuOpen) : toggleSidebar()}
+            className={`w-full flex items-center gap-3 ${isOpen ? "p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl" : "justify-center p-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl"} transition-all border border-transparent ${isUserMenuOpen ? "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-sm" : ""}`}
+          >
+             <div className={`relative shrink-0 w-8 h-8 rounded-lg overflow-hidden border ${planConf.ring}`}>
+                {photoUrl && !imgErr ? (
+                  <img src={photoUrl} alt={displayName} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${planConf.color} text-white font-bold text-xs`}>
+                    {initials}
+                  </div>
+                )}
+              </div>
+              {isOpen && (
+                <div className="flex flex-col min-w-0 flex-1 text-left">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{displayName}</span>
+                  <span className="text-[10px] text-slate-500 truncate">{user?.email}</span>
                 </div>
               )}
-            </div>
-            {isOpen && (
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{displayName}</span>
-                <span className={`text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r ${planConf.color} bg-clip-text text-transparent`}>{planConf.label} PLAN</span>
-              </div>
-            )}
+              {isOpen && (
+                <div className="text-slate-400 shrink-0">
+                  {isUserMenuOpen ? <FiChevronDown className="w-4 h-4" /> : <FiChevronUp className="w-4 h-4" />}
+                </div>
+              )}
+          </button>
         </div>
 
-        {/* Action Row */}
-        {isOpen ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between px-2">
-              <LanguageSwitcher />
-              <ThemeToggle />
-              <NotificationsDropdown />
-            </div>
-            <button onClick={logout} className="w-full flex items-center justify-center gap-2 p-2 mt-1 text-slate-500 hover:text-red-500 bg-slate-100 hover:bg-red-50 dark:bg-slate-800 dark:hover:bg-red-500/10 rounded-xl transition-colors font-bold text-sm">
-              <FiLogOut className="w-4 h-4" />
-              <span>{t("logout") || "Chiqish"}</span>
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-5 mt-2">
+        {!isOpen && (
+          <div className="flex flex-col items-center gap-5 mt-2 mb-2">
             <LanguageSwitcher compact />
             <NotificationsDropdown />
             <ThemeToggle />

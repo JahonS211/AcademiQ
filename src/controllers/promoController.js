@@ -1,4 +1,5 @@
 const PromoCode = require("../models/PromoCode");
+const Payment = require("../models/Payment");
 
 const createPromoCode = async (req, res, next) => {
   try {
@@ -12,6 +13,7 @@ const createPromoCode = async (req, res, next) => {
       discountPercent: Number(discountPercent),
       expiresAt: expiresAt ? new Date(expiresAt) : null,
       usageLimit: Number(usageLimit) || 0,
+      type: req.body.type || "both",
       createdByAdminEmail: req.admin?.email || "",
     });
 
@@ -41,6 +43,17 @@ const validatePromoCode = async (req, res, next) => {
       return res.status(400).json({ message: "Promo code usage limit reached" });
     }
 
+    // Per-user check
+    const alreadyUsed = await Payment.findOne({
+      userId: req.user._id,
+      promoCode: normalized,
+      status: "paid"
+    });
+
+    if (alreadyUsed) {
+      return res.status(400).json({ message: "Siz ushbu promo-koddan foydalanib bo'lgansiz" });
+    }
+
     return res.status(200).json({
       promo: {
         code: promo.code,
@@ -48,6 +61,7 @@ const validatePromoCode = async (req, res, next) => {
         expiresAt: promo.expiresAt,
         usageLimit: promo.usageLimit,
         usedCount: promo.usedCount,
+        type: promo.type,
       },
     });
   } catch (e) {

@@ -36,13 +36,21 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    dailyEssayCount: {
+    credits: {
+      type: Number,
+      default: 25, // Default for free plan
+    },
+    isUnlimitedCredits: {
+      type: Boolean,
+      default: false,
+    },
+    totalCreditsUsed: {
       type: Number,
       default: 0,
     },
-    dailyToolsCount: {
-      type: Number,
-      default: 0,
+    lastCreditReset: {
+      type: Date,
+      default: Date.now,
     },
     referralCode: {
       type: String,

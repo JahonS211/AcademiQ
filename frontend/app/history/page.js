@@ -20,9 +20,11 @@ export default function HistoryPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const endpoint = activeTab === "payment" 
-          ? "https://academiq-api-hsvi.onrender.com/api/payment/history" 
-          : "https://academiq-api-hsvi.onrender.com/api/rewards/me";
+        let endpoint = "";
+        if (activeTab === "payment") endpoint = "http://localhost:5000/api/payment/history";
+        else if (activeTab === "reward") endpoint = "http://localhost:5000/api/rewards/me";
+        else if (activeTab === "credits") endpoint = "http://localhost:5000/api/payment/credits/history";
+
         const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -59,6 +61,12 @@ export default function HistoryPage() {
           >
             Reward
           </button>
+          <button 
+            onClick={() => setActiveTab("credits")}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'credits' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            Credits
+          </button>
         </div>
       </div>
 
@@ -72,23 +80,25 @@ export default function HistoryPage() {
         ) : (
           <div className="space-y-3">
             {data.map((item, i) => (
-               <motion.div 
-                 initial={{ opacity: 0, y: 10 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ delay: i * 0.05 }}
-                 key={item._id || i}
-                 className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors border border-slate-100 dark:border-slate-700/50"
-               >
-                 <div>
-                   <p className="font-bold text-sm text-slate-900 dark:text-white capitalize">{item.status || item.type || "Completed"}</p>
-                   <p className="text-xs text-slate-500 font-medium mt-1">
-                     {new Date(item.createdAt).toLocaleString()}
-                   </p>
-                 </div>
-                 <div className="font-bold text-base text-indigo-600 dark:text-indigo-400">
-                   {item.amount || item.points ? `+${item.amount || item.points}` : "—"}
-                 </div>
-               </motion.div>
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  key={item._id || i}
+                  className="flex items-center justify-between p-5 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-colors border border-slate-100 dark:border-slate-700/50"
+                >
+                  <div>
+                    <p className="font-bold text-sm text-slate-900 dark:text-white capitalize">
+                      {item.actionType || item.status || item.type || "Completed"}
+                    </p>
+                    <p className="text-[10px] text-slate-500 font-medium mt-1">
+                      {item.description || new Date(item.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className={`font-bold text-base ${activeTab === 'credits' ? 'text-rose-500' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                    {activeTab === 'credits' ? `-${item.amount}` : (item.amount || item.points ? `+${item.amount || item.points}` : "—")}
+                  </div>
+                </motion.div>
             ))}
           </div>
         )}

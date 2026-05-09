@@ -41,18 +41,30 @@ const { generateTestAI } = require("../utils/testGenerator");
 
 const generateAITest = async (req, res, next) => {
   try {
-    const { topic, language } = req.body;
+    const { topic, language, questionCount } = req.body;
     if (!topic) return res.status(400).json({ message: "Topic is required" });
+
+    const parsedQuestionCount = Number(questionCount);
+    const safeQuestionCount = [5, 10, 15, 20].includes(parsedQuestionCount)
+      ? parsedQuestionCount
+      : 10;
 
     const test = await generateTestAI({ 
       topic, 
       language: language || "uz",
-      questionCount: 10 
+      questionCount: safeQuestionCount,
+      userPlan: req.user.plan || "free"
     });
+
+    let remainingCredits = null;
+    if (req.deductCredits) {
+      remainingCredits = await req.deductCredits(`Topic: ${topic}`);
+    }
 
     return res.status(200).json({
       message: "Test generated successfully",
-      test
+      test,
+      remainingCredits,
     });
   } catch (error) {
     return next(error);

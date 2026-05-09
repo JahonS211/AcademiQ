@@ -12,6 +12,21 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // If it's an admin token, handle it without DB lookup
+    if (decoded.role === "admin") {
+      req.user = {
+        id: "admin",
+        _id: "admin",
+        role: "admin",
+        email: decoded.email,
+        name: "Admin",
+        planType: "pro_plus",
+        isVirtual: true
+      };
+      return next();
+    }
+
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {

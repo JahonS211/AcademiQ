@@ -1,5 +1,5 @@
 const express = require("express");
-const { register, login, adminLogin, googleLogin, getProfile, updateProfile } = require("../controllers/authController");
+const { register, login, adminLogin, googleLogin, getProfile, updateProfile, changePassword } = require("../controllers/authController");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const loginLimiter = require("../middleware/loginThrottle");
 
@@ -12,5 +12,6 @@ router.post("/google", loginLimiter, googleLogin);
 
 router.get("/profile", authMiddleware, getProfile);
 router.post("/profile", authMiddleware, updateProfile);
+router.post("/change-password", authMiddleware, changePassword);
 
 module.exports = router;

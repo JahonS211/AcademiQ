@@ -3,6 +3,8 @@ const Payment = require("../models/Payment");
 const User = require("../models/User");
 const Referral = require("../models/Referral");
 const RewardLedger = require("../models/RewardLedger");
+const PromoCode = require("../models/PromoCode");
+const Support = require("../models/Support");
 const { createNotification } = require("../services/notificationService");
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "mock_token");
@@ -24,7 +26,16 @@ try {
 }
 
 bot.start((ctx) => {
-  ctx.reply(`Salom! Bot ishlayapti. Sizning Telegram ID: ${ctx.from.id}\n\nUshbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozib qo'ying.`);
+  if (ctx.from.id.toString() === ADMIN_ID) {
+    ctx.reply(`Xush kelibsiz, Admin! 🚀\n\nQuyidagi menyu orqali platformani boshqarishingiz mumkin:`, 
+      Markup.keyboard([
+        ["💳 To'lovlar", "👥 Foydalanuvchilar"],
+        ["📩 Support", "📊 Statistika"]
+      ]).resize()
+    );
+  } else {
+    ctx.reply(`Salom! AcademiQ botiga xush kelibsiz.\nSizning Telegram ID: ${ctx.from.id}\n\nAgar siz admin bo'lsangiz, ushbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozib qo'ying.`);
+  }
 });
 
 bot.command("id", (ctx) => {
@@ -37,12 +48,12 @@ const sendPaymentRequestToAdmin = async (payment, userEmail) => {
   const rewardsText = payment.rewardsApplied > 0 ? `\n🎁 Ishlatilgan mukofot: ${payment.rewardsApplied} UZS` : "";
   const promoText = payment.promoCode ? `\n🎟 Promo: ${payment.promoCode} (-${payment.promoDiscountPercent}%)` : "";
 
-  const message = `
+    const message = `
 🔔 <b>Yangi To'lov So'rovi!</b>
   
 👤 User: ${userEmail}
 💰 To'lanadi: ${payment.amount} UZS (Asl narxi: ${payment.originalAmount} UZS)${promoText}${rewardsText}
-📦 Tarif: ${payment.plan}
+📦 Turi: ${payment.type === 'plan' ? `Tarif (${payment.plan})` : `Kreditlar (${payment.creditAmount} ta)`}
 🔑 Kod: <code>${payment.code}</code>
   `;
 
@@ -81,13 +92,9 @@ const sendSupportMessageToAdmin = async (userEmail, text) => {
   await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "HTML" });
 };
 
-// --- Admin Panel Commands ---
+// --- Shared Logic Functions ---
 
-bot.command("id", (ctx) => {
-  ctx.reply(`Sizning ID: <code>${ctx.from.id}</code>\n\nUshbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozing.`, { parse_mode: "HTML" });
-});
-
-bot.command("users", async (ctx) => {
+const listUsers = async (ctx) => {
   if (ctx.from.id.toString() !== ADMIN_ID) return ctx.reply("Siz admin emassiz!");
   try {
     const users = await User.find().limit(20).sort("-createdAt");
@@ -99,9 +106,9 @@ bot.command("users", async (ctx) => {
   } catch (err) {
     ctx.reply("Xatolik: " + err.message);
   }
-});
+};
 
-bot.command("payments", async (ctx) => {
+const listPayments = async (ctx) => {
   if (ctx.from.id.toString() !== ADMIN_ID) return ctx.reply("Siz admin emassiz!");
   try {
     const payments = await Payment.find().sort("-createdAt").limit(15);
@@ -123,9 +130,9 @@ bot.command("payments", async (ctx) => {
   } catch (err) {
     ctx.reply("Xatolik: " + err.message);
   }
-});
+};
 
-bot.command("support", async (ctx) => {
+const listSupport = async (ctx) => {
   if (ctx.from.id.toString() !== ADMIN_ID) return ctx.reply("Siz admin emassiz!");
   try {
     const messages = await Support.find().sort("-createdAt").limit(15);
@@ -146,6 +153,48 @@ bot.command("support", async (ctx) => {
     });
   } catch (err) {
     ctx.reply("Xatolik: " + err.message);
+  }
+};
+
+// --- Admin Panel Commands ---
+
+bot.command("id", (ctx) => {
+  ctx.reply(`Sizning ID: <code>${ctx.from.id}</code>\n\nUshbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozing.`, { parse_mode: "HTML" });
+});
+
+bot.command("users", listUsers);
+bot.command("payments", listPayments);
+bot.command("support", listSupport);
+
+// --- Button Handlers ---
+
+bot.hears("💳 To'lovlar", listPayments);
+bot.hears("👥 Foydalanuvchilar", listUsers);
+bot.hears("📩 Support", listSupport);
+
+bot.hears("📊 Statistika", async (ctx) => {
+  if (ctx.from.id.toString() !== ADMIN_ID) return;
+  try {
+    const userCount = await User.countDocuments();
+    const paidUserCount = await User.countDocuments({ planType: { $ne: "free" } });
+    const totalPayments = await Payment.aggregate([
+      { $match: { status: "paid" } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const revenue = totalPayments[0]?.total || 0;
+
+    const text = `
+📊 <b>Platforma Statistikasi:</b>
+
+👥 Umumiy foydalanuvchilar: <b>${userCount}</b>
+💎 Premium foydalanuvchilar: <b>${paidUserCount}</b>
+💰 Umumiy tushum: <b>${revenue.toLocaleString()} UZS</b>
+
+🚀 <i>Ma'lumotlar real vaqt rejimida yangilandi.</i>
+    `;
+    ctx.reply(text, { parse_mode: "HTML" });
+  } catch (err) {
+    ctx.reply("Statistika yuklashda xatolik: " + err.message);
   }
 });
 
@@ -251,12 +300,24 @@ bot.action(/approve_(.+)/, async (ctx) => {
     payment.status = "paid";
     await payment.save();
 
+    // Increment promo code usedCount if applicable
+    if (payment.promoCode) {
+      await PromoCode.updateOne(
+        { code: payment.promoCode },
+        { $inc: { usedCount: 1 } }
+      );
+    }
+
     const user = await User.findById(payment.userId);
     if (user) {
-      user.planType = payment.plan;
-      // Extend subscription by 30 days from now (or from existing end date)
-      const base = user.subscriptionEndsAt && user.subscriptionEndsAt > new Date() ? user.subscriptionEndsAt : new Date();
-      user.subscriptionEndsAt = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+      if (payment.type === "plan") {
+        user.planType = payment.plan;
+        // Extend subscription by 30 days from now (or from existing end date)
+        const base = user.subscriptionEndsAt && user.subscriptionEndsAt > new Date() ? user.subscriptionEndsAt : new Date();
+        user.subscriptionEndsAt = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+      } else {
+        user.credits = Number(user.credits || 0) + Number(payment.creditAmount);
+      }
       await user.save();
 
       // Notification: payment approved
@@ -265,8 +326,10 @@ bot.action(/approve_(.+)/, async (ctx) => {
         type: "payment",
         severity: "success",
         title: "✅ Payment approved",
-        message: `Your payment (${payment.code}) was approved. Premium activated.`,
-        meta: { paymentId: payment._id, plan: payment.plan, amount: payment.amount },
+        message: payment.type === "plan" 
+          ? `Sizning to'lovingiz (${payment.code}) tasdiqlandi. Premium tarif faollashtirildi! ✅`
+          : `Sizning to'lovingiz (${payment.code}) tasdiqlandi. ✨ ${payment.creditAmount} TA KREDIT HISOBINGIZGA QO'SHILDI.`,
+        meta: { paymentId: payment._id, type: payment.type, plan: payment.plan, amount: payment.amount, credits: payment.creditAmount },
       });
 
       // Rewards: configurable via env (default 5% cashback)

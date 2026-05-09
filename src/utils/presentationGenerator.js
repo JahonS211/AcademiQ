@@ -1,45 +1,53 @@
 const PptxGenJS = require("pptxgenjs");
 const path = require("path");
-const fs = require("fs");
+const geminiService = require("../services/gemini.service");
 
-const generatePresentationAI = async ({ topic, language, slideCount = 5 }) => {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not set");
-  }
+const LANGUAGE_CONFIG = {
+  uz: {
+    name: "Uzbek language, Latin script",
+    instruction: "Write every title, bullet point, image description, and all visible slide text ONLY in Uzbek Latin script. Do not use English words unless they are unavoidable technical terms.",
+    imageLabel: "Rasm g'oyasi",
+  },
+  ru: {
+    name: "Russian language",
+    instruction: "Write every title, bullet point, image description, and all visible slide text ONLY in Russian.",
+    imageLabel: "Идея изображения",
+  },
+  en: {
+    name: "English language",
+    instruction: "Write every title, bullet point, image description, and all visible slide text ONLY in English.",
+    imageLabel: "Image idea",
+  },
+};
 
+const generatePresentationAI = async ({ topic, language, slideCount = 5, userPlan = "free" }) => {
+  const lang = LANGUAGE_CONFIG[language] || LANGUAGE_CONFIG.uz;
   const prompt = `
-    Create a detailed presentation outline about "${topic}" in ${language} language.
-    Generate exactly ${slideCount} slides.
-    For each slide, provide:
-    1. Title
-    2. Content (detailed bullet points)
-    3. Image Description (what kind of image would fit here)
-    
-    Return ONLY valid JSON in this format:
-    {
-      "title": "Main Title",
-      "slides": [
-        { "title": "Slide 1 Title", "content": ["Point 1", "Point 2"], "imageDesc": "Description" },
-        ...
-      ]
-    }
-  `;
+Create a clear, ready-to-present outline about "${topic}" in ${lang.name}.
+Generate exactly ${slideCount} slides.
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-      temperature: 0.7,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+Rules:
+1. Every slide title must be specific, not generic.
+2. Each slide must contain 3-5 concise bullet points with concrete information.
+3. Do not repeat the same idea across slides.
+4. Image descriptions must describe a useful visual for that slide.
+5. ${lang.instruction}
+6. The JSON keys must stay in English, but every JSON value must be in ${lang.name}.
 
-  const data = await response.json();
-  const content = JSON.parse(data.choices[0].message.content.replace(/```json|```/g, "").trim());
+Return ONLY valid JSON in this format:
+{
+  "title": "Presentation title in the selected language",
+  "slides": [
+    { "title": "Slide title in the selected language", "content": ["Specific point in the selected language", "Specific point in the selected language"], "imageDesc": "Useful visual description in the selected language" }
+  ]
+}
+  `.trim();
+
+  const content = await geminiService.generateJSON(prompt, null, userPlan, { title: topic, slides: [] });
+
+  if (!content.slides || content.slides.length === 0) {
+    throw new Error("Failed to generate presentation content");
+  }
 
   // Create PPTX
   const pptx = new PptxGenJS();
@@ -57,8 +65,8 @@ const generatePresentationAI = async ({ topic, language, slideCount = 5 }) => {
   content.slides.forEach(slideData => {
     let slide = pptx.addSlide();
     slide.addText(slideData.title, { x: 0.5, y: 0.5, w: 9, h: 1, fontSize: 32, bold: true, color: "0088CC" });
-    slide.addText(slideData.content.join("\n\n"), { x: 0.5, y: 1.5, w: 9, h: 4, fontSize: 18, color: "333333" });
-    slide.addText(`[Image Idea: ${slideData.imageDesc}]`, { x: 0.5, y: 5.5, w: 9, h: 0.5, fontSize: 10, italic: true, color: "999999" });
+    slide.addText(Array.isArray(slideData.content) ? slideData.content.join("\n\n") : slideData.content, { x: 0.5, y: 1.5, w: 9, h: 4, fontSize: 18, color: "333333" });
+    slide.addText(`[${lang.imageLabel}: ${slideData.imageDesc}]`, { x: 0.5, y: 5.5, w: 9, h: 0.5, fontSize: 10, italic: true, color: "999999" });
   });
 
   const fileName = `presentation-${Date.now()}.pptx`;

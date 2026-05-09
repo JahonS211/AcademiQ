@@ -4,10 +4,14 @@ const { authMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+const { getCreditHistory, purchaseCredits } = require("../controllers/creditController");
+
 router.post("/create", authMiddleware, createManualPayment);
 router.post("/upload-receipt", authMiddleware, uploadReceipt);
 router.get("/status/:code", authMiddleware, checkPaymentStatus);
 router.get("/history", authMiddleware, getPaymentHistory);
+router.get("/credits/history", authMiddleware, getCreditHistory);
+router.post("/credits/purchase", authMiddleware, purchaseCredits);
 router.post("/support", authMiddleware, async (req, res, next) => {
   const { message } = req.body;
   const { sendSupportMessageToAdmin } = require("../utils/telegramBot");

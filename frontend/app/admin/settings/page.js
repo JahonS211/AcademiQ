@@ -15,12 +15,13 @@ export default function AdminSettingsPage() {
     code: "",
     discountPercent: 10,
     usageLimit: 0,
+    type: "both",
   });
 
   const fetchPromos = async () => {
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.get("https://academiq-api-hsvi.onrender.com/api/admin/promo", {
+      const { data } = await axios.get("http://localhost:5000/api/admin/promo", {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPromos(data.promos || []);
@@ -42,11 +43,11 @@ export default function AdminSettingsPage() {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-api-hsvi.onrender.com/api/admin/promo", newPromo, {
+      await axios.post("http://localhost:5000/api/admin/promo", newPromo, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Promokod yaratildi!");
-      setNewPromo({ code: "", discountPercent: 10, usageLimit: 0 });
+      setNewPromo({ code: "", discountPercent: 10, usageLimit: 0, type: "both" });
       fetchPromos();
     } catch (err) {
       toast.error(err.response?.data?.message || "Xatolik yuz berdi");
@@ -57,7 +58,7 @@ export default function AdminSettingsPage() {
     if (!window.confirm("Rostdan ham o'chirmoqchimisiz?")) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`https://academiq-api-hsvi.onrender.com/api/admin/promo/${id}`, {
+      await axios.delete(`http://localhost:5000/api/admin/promo/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("O'chirildi!");
@@ -105,6 +106,18 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div>
+                <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Turi</label>
+                <select 
+                  className="input cursor-pointer"
+                  value={newPromo.type}
+                  onChange={e => setNewPromo({ ...newPromo, type: e.target.value })}
+                >
+                  <option value="both">HAMMASI (Plan & Kredit)</option>
+                  <option value="plan">FAQAT TARIFLAR (PRO/PRO+)</option>
+                  <option value="credits">FAQAT KREDITLAR</option>
+                </select>
+              </div>
+              <div>
                 <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Ishlatish Limiti (0 = cheksiz)</label>
                 <input 
                   required
@@ -134,7 +147,7 @@ export default function AdminSettingsPage() {
                     <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Kod</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Chegirma</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Limit</th>
-                    <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Ishlatildi</th>
+                    <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Bor (Available)</th>
                     <th className="py-3 px-4 text-xs font-bold uppercase text-slate-500">Amal</th>
                   </tr>
                 </thead>

@@ -6,6 +6,17 @@ body {
   @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
 }
 
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+#__next {
+  min-height: 100%;
+}
+
 body::before {
   content: "";
   position: fixed;
@@ -38,6 +49,19 @@ body::before {
   @apply w-full rounded-xl border border-slate-300/50 bg-white/50 px-4 py-3 outline-none backdrop-blur-md transition-all focus:border-brandA focus:ring-4 focus:ring-brandA/10 dark:border-slate-700/50 dark:bg-slate-900/50 dark:focus:ring-brandA/20;
 }
 
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -45,3 +69,4 @@ body::before {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+

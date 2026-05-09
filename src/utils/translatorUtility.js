@@ -1,44 +1,29 @@
-const translateAI = async ({ text, targetLanguage }) => {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error("GROQ_API_KEY is not set");
-  }
+const { generateText } = require("./geminiService");
 
+const translateAI = async ({ text, targetLanguage }) => {
   const prompt = `
-    You are a highly accurate professional translator. 
-    Translate the following text exactly into ${targetLanguage}.
-    ${targetLanguage === 'Ўзбек (Кирилл)' ? 'IMPORTANT: You MUST write the translation in Cyrillic alphabet (Кирилл алифбоси) only. Do NOT use Latin.' : ''}
-    Maintain the tone and original formatting.
+    You are a professional multilingual translator. 
+    Task: Translate the provided text into ${targetLanguage}.
+    
+    RULES:
+    1. Translate the text accurately, maintaining the original meaning, tone, and context.
+    2. ${targetLanguage === 'Ўзбек (Кирилл)' ? 'CRITICAL: Use ONLY the Cyrillic alphabet (Кирилл алифбоси). Do NOT use Latin.' : ''}
+    3. DO NOT repeat the source text. 
+    4. DO NOT provide any explanations, notes, or intros.
+    5. Return ONLY the translated text.
+    
     Text to translate:
     """
     ${text}
     """
-    
-    Return ONLY the raw translated text without any quotes, markdown formatting, or additional explanations.
   `;
 
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.GROQ_MODEL || "llama-3.1-8b-instant",
-      temperature: 0.3,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Translation API error: ${response.status} ${errorText}`);
+  try {
+    return await generateText(prompt);
+  } catch (error) {
+    console.error("Translation Error:", error);
+    throw error;
   }
-
-  const data = await response.json();
-  if (!data.choices?.[0]?.message?.content) {
-    throw new Error("Translation API returned empty content");
-  }
-  return data.choices[0].message.content.trim();
 };
 
 module.exports = { translateAI };

@@ -20,7 +20,7 @@ export default function NotificationsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("https://academiq-api-hsvi.onrender.com/api/notifications", {
+        const res = await axios.get("http://localhost:5000/api/notifications", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setData(res.data.notifications || []);

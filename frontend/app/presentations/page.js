@@ -5,18 +5,29 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
-import { FiPieChart, FiZap } from "react-icons/fi";
+import { syncUserCredits } from "../../lib/syncUtils";
+import { FiPieChart, FiZap, FiGlobe } from "react-icons/fi";
+import CustomSelect from "../../components/CustomSelect";
+import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
 
 export default function PresentationsPage() {
   const { t } = useI18n();
   const ready = useRequireAuth();
   const [topic, setTopic] = useState("");
+  const [language, setLanguage] = useState("uz");
   const [loading, setLoading] = useState(false);
   const [presentations, setPresentations] = useState([]);
+  const [showCreditModal, setShowCreditModal] = useState(false);
+
+  const langOptions = [
+    { value: "uz", label: "O'zbekcha" },
+    { value: "ru", label: "Русский" },
+    { value: "en", label: "English" },
+  ];
 
   const fetchPresentations = async () => {
     try {
-      const { data } = await axios.get("https://academiq-api-hsvi.onrender.com/api/presentations");
+      const { data } = await axios.get("http://localhost:5000/api/presentations");
       setPresentations(data.presentations || []);
     } catch (err) {
       console.error(err);
@@ -28,21 +39,27 @@ export default function PresentationsPage() {
   }, [ready]);
 
   const handleGenerate = async () => {
-    if (!topic) return toast.error("Mavzuni kiriting!");
+    if (!topic) return toast.error(t("enterTopic"));
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/presentations/generate", 
-        { topic, language: "uz" },
+      const { data } = await axios.post("http://localhost:5000/api/presentations/generate", 
+        { topic, language },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Prezentatsiya tayyor!");
+      toast.success(t("generatedSuccess"));
       setTopic("");
+      syncUserCredits(data.remainingCredits);
       fetchPresentations();
       // Auto-download
       window.open(`http://localhost:5000${data.presentation.fileUrl}`, "_blank");
     } catch (err) {
-      toast.error("Xatolik yuz berdi");
+      const msg = err.response?.data?.message || "Xatolik yuz berdi";
+      if (msg.toLowerCase().includes("kredit") || msg.toLowerCase().includes("credit")) {
+        setShowCreditModal(true);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,12 +93,26 @@ export default function PresentationsPage() {
             value={topic}
             onChange={e => setTopic(e.target.value)}
           />
+          <div className="w-full md:w-40 relative z-50">
+            <CustomSelect 
+              value={language}
+              onChange={setLanguage}
+              options={langOptions}
+              icon={<FiGlobe />}
+            />
+          </div>
           <button 
             disabled={loading}
             onClick={handleGenerate}
-            className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50"
+            className="px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center justify-center gap-2 group whitespace-nowrap"
           >
-            {loading ? t("loading") : <span className="flex items-center justify-center gap-2">{t("generate")} <FiZap /></span>}
+            {loading ? t("loading") : (
+              <>
+                <span>{t("generate")}</span>
+                <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                <span className="ml-2 px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter uppercase">10 {t("credits")}</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -109,11 +140,15 @@ export default function PresentationsPage() {
           ))}
           {presentations.length === 0 && (
             <div className="col-span-full p-12 text-center text-slate-400 font-bold uppercase text-[10px] tracking-widest bg-slate-50/50 dark:bg-slate-900/50 rounded-[2rem]">
-              Hozircha prezentatsiyalar yo'q.
+              {t("noPresentations")}
             </div>
           )}
         </div>
       </div>
+      <InsufficientCreditsModal 
+        isOpen={showCreditModal} 
+        onClose={() => setShowCreditModal(false)} 
+      />
     </div>
   );
 }

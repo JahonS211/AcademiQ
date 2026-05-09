@@ -34,6 +34,11 @@ const promoCodeSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+    type: {
+      type: String,
+      enum: ["plan", "credits", "both"],
+      default: "both",
+    },
     createdByAdminEmail: {
       type: String,
       default: "",

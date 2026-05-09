@@ -1,96 +1,81 @@
 const Essay = require("../models/Essay");
-const User = require("../models/User");
-const { generateEssay } = require("../utils/essayGenerator");
-
-const DAILY_LIMIT = 3;
-
-const getStartOfDay = () => {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
+const geminiService = require("../services/gemini.service");
 
 const generateEssayHandler = async (req, res, next) => {
   try {
     const { topic, language, length } = req.body;
-    const validLanguages = ["uz", "ru", "en"];
-    const validLengths = ["short", "medium", "long"];
-
     if (!topic || !language || !length) {
-      return res.status(400).json({ message: "topic, language and length are required" });
+      return res.status(400).json({ success: false, message: "topic, language and length are required" });
     }
 
-    if (!validLanguages.includes(language)) {
-      return res.status(400).json({ message: "language must be uz, ru, or en" });
+    const languageLabelMap = { uz: "Uzbek", ru: "Russian", en: "English" };
+    const prompt = `
+Siz professional akademik insho yozuvchisiz. 
+Mavzu: "${topic}"
+Til: ${languageLabelMap[language] || language}
+Hajm: ${length} (short: 300 so'z, medium: 600 so'z, long: 1000+ so'z)
+
+QOIDALAR:
+1. Insho akademik, mantiqiy va chuqur tahliliy bo'lishi kerak.
+2. Kirish qismida mavzuning dolzarbligi va asosiy tezisni yoritib bering.
+3. Asosiy qismda har bir paragraf alohida g'oyani dalillar va misollar bilan tushuntirishi kerak.
+4. Xulosa qismida asosiy fikrlarni jamlab, yakuniy xulosa yasang.
+5. Faktga ishonching komil bo'lmasa, aniq fakt sifatida yozma; umumiy tahlil sifatida ifodala.
+6. Har bir paragraf mavzuga bevosita bog'liq bo'lsin, umumiy va noaniq jumlalardan qoch.
+7. Matnning o'qilishi oson, lekin tili boy bo'lsin.
+8. Body qismi bir nechta mantiqiy paragrafdan iborat bo'lsin.
+
+FAQAT va FAQAT quyidagi JSON formatida javob bering (boshqa hech narsa yozmang):
+{"introduction":"...", "body":"...", "conclusion":"..."}
+    `.trim();
+
+    const generated = await geminiService.generateJSON(prompt, null, req.user.plan || "free");
+
+    if (generated.error) {
+      return res.status(503).json({ success: false, message: generated.error });
     }
 
-    if (!validLengths.includes(length)) {
-      return res.status(400).json({ message: "length must be short, medium, or long" });
-    }
-
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const LIMITS = { free: 3, pro: 10, pro_plus: Infinity };
-    const limit = LIMITS[user.planType] || LIMITS.free;
-
-    if (limit !== Infinity) {
-      const todayCount = await Essay.countDocuments({
-        userId: user._id,
-        createdAt: { $gte: getStartOfDay() },
-      });
-
-      if (todayCount >= limit) {
-        return res.status(429).json({
-          message: `Daily essay limit (${limit}) exceeded. Upgrade your plan for more.`,
-        });
-      }
-    }
-
-    const generated = await generateEssay({ topic, language, length });
-
-    // Validate and sanitize content
     if (!generated.introduction || !generated.body || !generated.conclusion) {
-      throw new Error("Generated essay is missing required sections");
+      return res.status(503).json({ success: false, message: "AI javobi noto'g'ri formatda keldi. Iltimos qaytadan urinib ko'ring." });
     }
-
-    const essayContent = {
-      introduction: String(generated.introduction || ""),
-      body: String(generated.body || ""),
-      conclusion: String(generated.conclusion || ""),
-    };
 
     const savedEssay = await Essay.create({
-      userId: user._id,
+      userId: req.user.id || req.user._id,
       topic,
-      content: essayContent,
+      content: {
+        introduction: generated.introduction,
+        body: generated.body,
+        conclusion: generated.conclusion,
+      },
     });
 
-    if (limit !== Infinity) {
-      user.dailyEssayCount = await Essay.countDocuments({
-        userId: user._id,
-        createdAt: { $gte: getStartOfDay() },
-      });
-      await user.save();
+    let remainingCredits = null;
+    if (req.deductCredits) {
+      remainingCredits = await req.deductCredits(`Essay: ${topic.slice(0, 30)}`);
     }
 
     return res.status(201).json({
+      success: true,
       message: "Essay generated successfully",
-      essay: {
-        content: {
-          introduction: essayContent.introduction,
-          body: essayContent.body,
-          conclusion: essayContent.conclusion,
-        }
-      },
+      essay: savedEssay,
+      remainingCredits,
     });
   } catch (error) {
-    return next(error);
+    console.error("Essay Generation Handler Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error during essay generation" });
+  }
+};
+
+const getMyEssays = async (req, res, next) => {
+  try {
+    const essays = await Essay.find({ userId: req.user.id || req.user._id }).sort({ createdAt: -1 });
+    return res.status(200).json({ success: true, essays });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch essays" });
   }
 };
 
 module.exports = {
   generateEssayHandler,
+  getMyEssays,
 };

@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import { promoApi, rewardsApi, presenceApi } from "../../lib/api";
-import { FiCheckCircle, FiCopy, FiCamera, FiRefreshCw } from "react-icons/fi";
+import { FiCheckCircle, FiCopy, FiCamera, FiRefreshCw, FiZap } from "react-icons/fi";
 
 export default function PricingPage() {
   const { t } = useI18n();
@@ -81,7 +81,7 @@ export default function PricingPage() {
 
     setLoading(plan);
     try {
-      const { data } = await axios.post("https://academiq-api-hsvi.onrender.com/api/payment/create", 
+      const { data } = await axios.post("http://localhost:5000/api/payment/create", 
         { plan, promoCode: promoInfo?.code || promoCode || "", useRewards: overrideRewards }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -106,7 +106,7 @@ export default function PricingPage() {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data } = await axios.get(`https://academiq-api-hsvi.onrender.com/api/payment/status/${code}`, {
+        const { data } = await axios.get(`http://localhost:5000/api/payment/status/${code}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -140,7 +140,7 @@ export default function PricingPage() {
     if (!supportMsg) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-api-hsvi.onrender.com/api/payment/support", 
+      await axios.post("http://localhost:5000/api/payment/support", 
         { message: supportMsg }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -166,7 +166,7 @@ export default function PricingPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-api-hsvi.onrender.com/api/payment/upload-receipt", formData, {
+      await axios.post("http://localhost:5000/api/payment/upload-receipt", formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -182,13 +182,14 @@ export default function PricingPage() {
   };
 
   const features = [
-    { name: "Insho yaratish", free: "3 ta/kun", pro: "10 ta/kun", pro_plus: "Cheksiz" },
-    { name: "Fayllar bilan ishlash", free: "1 ta/kun", pro: "10 ta/kun", pro_plus: "Cheksiz" },
-    { name: "Ilg'or AI modellari", free: false, pro: true, pro_plus: true },
+    { name: "AI Kreditlar", free: "25 ta", pro: "150 ta", pro_plus: "500 ta" },
+    { name: "Insho yaratish", free: "✔", pro: "✔", pro_plus: "Cheksiz" },
+    { name: "Grammarly AI", free: false, pro: true, pro_plus: true },
+    { name: "AI Detector", free: false, pro: true, pro_plus: true },
+    { name: "ZIP Arxivator", free: false, pro: true, pro_plus: true },
     { name: "Taqdimot yaratish", free: false, pro: true, pro_plus: true },
-    { name: "Testlar yechish", free: true, pro: true, pro_plus: true },
+    { name: "Ilg'or AI modellari", free: false, pro: true, pro_plus: true },
     { name: "Prioritet yordam", free: false, pro: true, pro_plus: true },
-    { name: "VIP Chat", free: false, pro: false, pro_plus: true },
   ];
 
   const tiers = [
@@ -196,28 +197,28 @@ export default function PricingPage() {
       name: "Free",
       price: "0",
       description: "AcademiQ imkoniyatlarini sinab ko'ring",
-      features: ["Kuniga 3 ta insho", "Kuniga 1 ta fayl xizmati", "Asosiy AI modellari"],
+      features: ["25 ta AI Kredit", "Barcha asboblar", "Asosiy AI modellari"],
       buttonText: "Boshlash",
       planId: "free",
       priceNum: 0,
     },
     {
       name: "Pro",
-      price: "17 990",
+      price: "14 990",
       description: "Kengaytirilgan imkoniyatlar bilan o'qing",
-      features: ["Kuniga 10 ta insho", "Kuniga 10 ta fayl xizmati", "Ilg'or AI modellari", "Tezroq javob", "Prioritet yordam"],
+      features: ["150 ta AI Kredit", "Ilg'or AI modellari", "Tezroq javob", "Prioritet yordam"],
       buttonText: "Pro'ga o'tish",
       planId: "pro",
-      priceNum: 17990,
+      priceNum: 14990,
     },
     {
       name: "Pro+",
-      price: "27 990",
+      price: "24 990",
       description: "Barcha cheklovlarni olib tashlang",
-      features: ["Cheklovsiz insholar", "Cheklovsiz fayl xizmatlari", "Barcha premium xizmatlar", "Eng tezkor javob", "24/7 VIP Yordam"],
+      features: ["500 ta AI Kredit", "Barcha premium xizmatlar", "Eng tezkor javob", "24/7 VIP Yordam"],
       buttonText: "Pro+'ga o'tish",
       planId: "pro_plus",
-      priceNum: 27990,
+      priceNum: 24990,
       popular: true,
     },
   ];
@@ -231,6 +232,23 @@ export default function PricingPage() {
         <p className="text-slate-500 max-w-2xl mx-auto font-medium">
           AcademiQ bilan o'qishda yangi marralarni zabt eting.
         </p>
+
+        {/* Refill Credits CTA */}
+        <div className="mt-12 inline-flex items-center gap-6 p-2 pr-6 bg-brandA/5 rounded-3xl border border-brandA/10 animate-in fade-in slide-in-from-top duration-700">
+           <div className="w-12 h-12 bg-brandA text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-brandA/20 animate-pulse">
+              <FiZap />
+           </div>
+           <div className="text-left">
+              <p className="text-xs font-black uppercase tracking-widest text-brandA">Kreditlar tugadimi?</p>
+              <p className="text-[10px] font-bold text-slate-500">Tarifingizni o'zgartirmasdan kredit sotib oling</p>
+           </div>
+           <button 
+             onClick={() => router.push("/buy-credits")}
+             className="ml-4 px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-transform"
+           >
+              Kredit olish
+           </button>
+        </div>
       </div>
 
       {/* Pricing Cards */}
@@ -430,7 +448,7 @@ export default function PricingPage() {
                       <div>
                         <p className="text-[7px] text-slate-400 font-black uppercase tracking-widest">Use rewards</p>
                         <p className="text-[10px] text-slate-500 font-bold mt-1">
-                          {rewardsInfo ? `Balance: ${rewardsInfo.rewardBalance?.toLocaleString?.() || rewardsInfo.rewardBalance}` : "Balance: —"}
+                          Balans: {rewardsInfo?.rewardBalance?.toLocaleString() || user?.rewardBalance?.toLocaleString() || 0} UZS
                         </p>
                       </div>
                       <button

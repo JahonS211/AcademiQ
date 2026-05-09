@@ -299,7 +299,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "https://academiq-api-hsvi.onrender.com",
+			"value": "http://localhost:5000",
 			"type": "string"
 		},
 		{

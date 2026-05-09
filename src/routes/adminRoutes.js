@@ -4,7 +4,8 @@ const {
   getUsers, 
   updateUser, 
   deleteUser, 
-  blockUser 
+  blockUser,
+  adminAssistantCommand
 } = require("../controllers/adminController");
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.get("/users", getUsers);
 router.put("/users/:id", updateUser);
 router.delete("/users/:id", deleteUser);
 router.post("/users/:id/block", blockUser);
+router.post("/assistant", adminAssistantCommand);
 
 module.exports = router;

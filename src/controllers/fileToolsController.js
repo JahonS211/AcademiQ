@@ -1,53 +1,34 @@
-const User = require("../models/User");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
-const { extractTextWithGroq } = require("../utils/ocrUtility");
+const archiver = require("archiver");
+const geminiService = require("../services/gemini.service");
+
+const createZipArchive = (options) => {
+  if (typeof archiver === "function") return archiver("zip", options);
+  if (typeof archiver.ZipArchive === "function") return new archiver.ZipArchive(options);
+  throw new Error("Unsupported archiver package version");
+};
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
 });
-const upload = multer({ storage }).single("file");
-const getStartOfDay = () => {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
 
-const checkToolLimit = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
-
-  const LIMITS = { free: 1, pro: 10, pro_plus: Infinity };
-  const limit = LIMITS[user.planType] || LIMITS.free;
-
-  // Since we don't have a separate ToolUsage model, we use user.dailyToolsCount and reset it daily.
-  // A better approach is to store timestamps, but for simplicity we'll increment the counter.
-  // Ideally, we'd reset this daily via a cron job, but we'll just check it here for now.
-  // Actually, we need to track usage per day properly. Let's just mock it with the user model counter for now.
-  if (limit !== Infinity) {
-    if (user.dailyToolsCount >= limit) {
-      return false; // limit exceeded
-    }
-    user.dailyToolsCount += 1;
-    await user.save();
-  }
-  return true;
-};
+const uploadSingle = multer({ storage }).single("file");
+const uploadMultiple = multer({ storage }).array("files", 20); // Up to 20 files for ZIP
 
 const handleToolRequest = async (req, res, next, mockResponse) => {
   try {
-    const isAllowed = await checkToolLimit(req.user._id);
-    if (!isAllowed) {
-      return res.status(429).json({
-        message: "Daily tools limit exceeded. Upgrade your plan for more.",
-      });
+    let remainingCredits = null;
+    if (req.deductCredits) {
+      remainingCredits = await req.deductCredits();
     }
-    return res.status(200).json(mockResponse);
+    return res.status(200).json({ success: true, ...mockResponse, remainingCredits });
   } catch (error) {
-    return next(error);
+    console.error("Tool Request Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error in tool" });
   }
 };
 
@@ -58,45 +39,119 @@ const pdfToWord = (req, res, next) =>
   });
 
 const imageToText = async (req, res, next) => {
-  upload(req, res, async (err) => {
-    if (err) return res.status(400).json({ message: "Upload failed" });
-    if (!req.file) return res.status(400).json({ message: "No file provided" });
+  uploadSingle(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, message: "Upload failed" });
+    if (!req.file) return res.status(400).json({ success: false, message: "No file provided" });
 
     try {
-      const isAllowed = await checkToolLimit(req.user._id);
-      if (!isAllowed) return res.status(429).json({ message: "Limit exceeded" });
+      const prompt = `
+        Sen professional OCR asbobisan. Ushbu rasmdagi barcha matnlarni aniqlik bilan chiqarib ber. 
+        Agar rasmda qo'lyozma bo'lsa, uni ham o'qishga harakat qil. 
+        Matn tarkibini va strukturasini buzmasdan, tushunarli formatda qaytar.
+      `.trim();
+      const ext = path.extname(req.file.path).toLowerCase();
+      const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
 
-      const extractedText = await extractTextWithGroq(req.file.path);
+      const extractedText = await geminiService.generateFromImage(prompt, fs.readFileSync(req.file.path), mimeType);
 
-      fs.unlink(req.file.path, () => {}); // Cleanup
+      if (!extractedText || typeof extractedText !== "string" || extractedText.error) {
+        return res.status(503).json({ 
+          success: false, 
+          message: extractedText?.error || "OCR analysis failed. Please try again." 
+        });
+      }
+
+      let remainingCredits = null;
+      if (req.deductCredits) {
+        remainingCredits = await req.deductCredits(`OCR: ${req.file.originalname}`);
+      }
+
+      // Cleanup
+      fs.unlink(req.file.path, () => {});
 
       res.status(200).json({
+        success: true,
         message: "OCR completed successfully",
         extractedText,
+        remainingCredits,
       });
     } catch (error) {
-      fs.unlink(req.file.path, () => {}); // Cleanup
-      return next(error);
+      console.error("OCR Error:", error);
+      if (req.file) fs.unlink(req.file.path, () => {}); 
+      return res.status(500).json({ success: false, message: "Error processing image for OCR" });
     }
   });
 };
 
-const compressFile = (req, res, next) =>
-  handleToolRequest(req, res, next, {
-    message: "Compression completed",
-    resultUrl: "/uploads/archive.zip",
-    compressedSize: "45% smaller",
-  });
+const compressFile = async (req, res, next) => {
+  uploadMultiple(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, message: "Upload failed" });
+    if (!req.files || req.files.length === 0) return res.status(400).json({ success: false, message: "No files provided" });
 
+    const fileName = `archive-${Date.now()}.zip`;
+    const filePath = path.join(process.cwd(), "uploads", fileName);
+    const output = fs.createWriteStream(filePath);
+    const archive = createZipArchive({ zlib: { level: 9 } });
 
-const imageToPdf = async (req, res, next) => {
-  upload(req, res, async (err) => {
-    if (err) return res.status(400).json({ message: "Upload failed" });
-    if (!req.file) return res.status(400).json({ message: "No file provided" });
+    output.on("close", async () => {
+      let remainingCredits = null;
+      if (req.deductCredits) {
+        try {
+          remainingCredits = await req.deductCredits(`ZIP: ${req.files.length} files`);
+        } catch (e) {
+          console.error("Credit deduction failed in ZIP:", e);
+        }
+      }
+
+      // Cleanup original files
+      req.files.forEach(f => {
+        try { if (fs.existsSync(f.path)) fs.unlinkSync(f.path); } catch(e) {}
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Files zipped successfully",
+        resultUrl: `/uploads/${fileName}`,
+        remainingCredits,
+      });
+    });
+
+    archive.on("error", (err) => {
+      console.error("Archiver error:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: "Error creating zip archive" });
+      }
+    });
+
+    archive.pipe(output);
+
+    req.files.forEach(file => {
+      if (fs.existsSync(file.path)) {
+        archive.file(file.path, { name: file.originalname });
+      }
+    });
 
     try {
-      const isAllowed = await checkToolLimit(req.user._id);
-      if (!isAllowed) return res.status(429).json({ message: "Limit exceeded" });
+      await archive.finalize();
+    } catch (e) {
+      console.error("Finalize error:", e);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: "Error finalizing zip archive" });
+      }
+    }
+  });
+};
+
+const imageToPdf = async (req, res, next) => {
+  uploadSingle(req, res, async (err) => {
+    if (err) return res.status(400).json({ success: false, message: "Upload failed" });
+    if (!req.file) return res.status(400).json({ success: false, message: "No file provided" });
+
+    try {
+      let remainingCredits = null;
+      if (req.deductCredits) {
+        remainingCredits = await req.deductCredits(`Image to PDF: ${req.file.originalname}`);
+      }
 
       const doc = new PDFDocument();
       const fileName = `output-${Date.now()}.pdf`;
@@ -112,37 +167,43 @@ const imageToPdf = async (req, res, next) => {
       doc.end();
 
       stream.on("finish", () => {
+        fs.unlink(req.file.path, () => {});
         res.status(200).json({
+          success: true,
           message: "Converted successfully",
           resultUrl: `/uploads/${fileName}`,
+          remainingCredits,
         });
       });
     } catch (error) {
-      return next(error);
+      console.error("Image to PDF Error:", error);
+      if (req.file) fs.unlink(req.file.path, () => {});
+      return res.status(500).json({ success: false, message: "Error converting image to PDF" });
     }
   });
 };
-
-const { translateAI } = require("../utils/translatorUtility");
 
 const translateText = async (req, res, next) => {
   try {
     const { text, targetLanguage } = req.body;
     if (!text || !targetLanguage) {
-      return res.status(400).json({ message: "Text and targetLanguage are required" });
+      return res.status(400).json({ success: false, message: "Text and targetLanguage are required" });
     }
 
-    const isAllowed = await checkToolLimit(req.user._id);
-    if (!isAllowed) {
-      return res.status(429).json({
-        message: "Daily translation limit exceeded. Upgrade your plan for more.",
+    const prompt = `Translate the following text into ${targetLanguage}. Return ONLY the translated text.\n\nText: "${text}"`;
+    const translatedText = await geminiService.generateText(prompt, null, req.user.plan || "free");
+
+    if (!translatedText || translatedText.error) {
+      return res.status(503).json({ 
+        success: false, 
+        message: translatedText?.error || "Translation failed. AI service unavailable." 
       });
     }
 
-    const translatedText = await translateAI({ text, targetLanguage });
-    return res.status(200).json({ translatedText });
+    return res.status(200).json({ success: true, translatedText, remainingCredits: null });
   } catch (error) {
-    return next(error);
+    console.error("Translation Handler Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error in translation" });
   }
 };
 

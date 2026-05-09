@@ -4,6 +4,7 @@ const errorMiddleware = (err, req, res, next) => {
   const message = err.message || "Internal server error";
 
   res.status(status).json({
+    success: false,
     message,
     retryDelay: err.retryDelay,
   });
