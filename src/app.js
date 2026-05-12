@@ -1,8 +1,7 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const fs = require("fs");
 
 const authRoutes = require("./routes/authRoutes");
 const essayRoutes = require("./routes/essayRoutes");
@@ -15,29 +14,48 @@ const { login, register } = require("./controllers/authController");
 const app = express();
 
 // Ensure uploads directory exists
+const fs = require("fs");
 if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-app.use(helmet({
-  crossOriginOpenerPolicy: { policy: "unsafe-none" },
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  contentSecurityPolicy: false,
-}));
+const allowedOrigins = (process.env.CORS_ORIGIN || process.env.PUBLIC_WEB_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors({
-  origin: true,
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.length === 0 ||
+      allowedOrigins.includes(origin) ||
+      /^https?:\/\/localhost:\d+$/i.test(origin) ||
+      /^https?:\/\/127\.0\.0\.1:\d+$/i.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-admin-token"]
-}));
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Disable for development to allow external scripts easily
+}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 1000, // Increased for development
   message: "Too many requests from this IP, please try again later.",
 });
 app.use(limiter);
@@ -54,11 +72,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "Backend working" });
 });
 
-// Compatibility aliases
+// Compatibility aliases for frontend clients expecting these paths.
 app.post("/api/login", login);
 app.post("/api/register", register);
 
 const paymentRoutes = require("./routes/paymentRoutes");
+
 const adminRoutes = require("./routes/adminRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const referralRoutes = require("./routes/referralRoutes");
@@ -93,6 +112,7 @@ app.use("/api", studyRoutes);
 app.use("/api", aiToolsRoutes);
 app.use("/api", mathRoutes);
 
+
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
@@ -100,3 +120,4 @@ app.use((req, res) => {
 app.use(errorMiddleware);
 
 module.exports = app;
+

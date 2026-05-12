@@ -20,9 +20,7 @@ export default function PageWrapper({ children }) {
     return () => window.removeEventListener("sidebarToggle", listener);
   }, [pathname]);
 
-  const isAuthPage = pathname === "/login" || pathname === "/register";
-
-  if (!isLoggedIn || isAuthPage) {
+  if (!isLoggedIn) {
     return <div className="w-full min-h-screen overflow-x-hidden">{children}</div>;
   }
 

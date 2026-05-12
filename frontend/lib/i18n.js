@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const messages = {
   uz: {
-    home: "AcademiQ",
+    home: "Bosh sahifa",
     about: "Biz haqimizda",
     essay: "Insho Generatori",
     tools: "AI Asboblar",
@@ -145,7 +145,7 @@ const messages = {
     premiumUnlimited: "Premium Cheksiz Aktiv ✨",
   },
   ru: {
-    home: "AcademiQ",
+    home: "Главная",
     about: "О нас",
     essay: "Генератор эссе",
     tools: "AI Инструменты",
@@ -286,7 +286,7 @@ const messages = {
     premiumUnlimited: "Premium Безлимит Активен ✨",
   },
   en: {
-    home: "AcademiQ",
+    home: "Home",
     about: "About Us",
     essay: "Essay Generator",
     tools: "AI Tools",
