@@ -1,4 +1,6 @@
 {
   "/admin/panel/page": "app/admin/panel/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/chat/page": "app/chat/page.js",
   "/(auth)/login/page": "app/(auth)/login/page.js"
 }
