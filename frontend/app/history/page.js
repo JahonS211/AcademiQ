@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
@@ -21,9 +22,9 @@ export default function HistoryPage() {
       setLoading(true);
       try {
         let endpoint = "";
-        if (activeTab === "payment") endpoint = "https://academiq-production-0920.up.railway.app/api/payment/history";
-        else if (activeTab === "reward") endpoint = "https://academiq-production-0920.up.railway.app/api/rewards/me";
-        else if (activeTab === "credits") endpoint = "https://academiq-production-0920.up.railway.app/api/payment/credits/history";
+        if (activeTab === "payment") endpoint = `${API_BASE_URL}/api/payment/history`;
+        else if (activeTab === "reward") endpoint = `${API_BASE_URL}/api/rewards/me`;
+        else if (activeTab === "credits") endpoint = `${API_BASE_URL}/api/payment/credits/history`;
 
         const res = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` }

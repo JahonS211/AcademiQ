@@ -1,13 +1,13 @@
 "use client";
 
+import { API_BASE_URL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
 import { useI18n } from "../../../lib/i18n";
 import { ManagementBar } from "../../../components/ManagementBar";
-import { FiChevronDown, FiMessageSquare, FiPieChart, FiSend, FiZap } from "react-icons/fi";
+import { FiChevronDown, FiMessageSquare, FiPieChart, FiSend, FiZap, FiEdit2, FiSlash, FiUnlock, FiTrash2, FiUpload } from "react-icons/fi";
 import Link from "next/link";
 
 export default function AdminPanelPage() {
@@ -43,7 +43,7 @@ export default function AdminPanelPage() {
 
   const fetchUsers = async (token) => {
     try {
-      const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/admin/manage/users", {
+      const { data } = await axios.get(`${API_BASE_URL}/api/admin/manage/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(data.users);
@@ -55,7 +55,7 @@ export default function AdminPanelPage() {
   const handleUpdateUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`https://academiq-production-0920.up.railway.app/api/admin/manage/users/${editingUser._id}`, editingUser, {
+      await axios.put(`${API_BASE_URL}/api/admin/manage/users/${editingUser._id}`, editingUser, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       toast.success(t("processSuccess"));
@@ -69,7 +69,7 @@ export default function AdminPanelPage() {
   const handleDeleteUser = async (id) => {
     if (!confirm(t("confirmDelete") || "Haqiqatdan ham o'chirmoqchimisiz?")) return;
     try {
-      await axios.delete(`https://academiq-production-0920.up.railway.app/api/admin/manage/users/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/manage/users/${id}`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       toast.success(t("processSuccess"));
@@ -81,7 +81,7 @@ export default function AdminPanelPage() {
 
   const handleBlockUser = async () => {
     try {
-      await axios.post(`https://academiq-production-0920.up.railway.app/api/admin/manage/users/${blockingUser._id}/block`, {
+      await axios.post(`${API_BASE_URL}/api/admin/manage/users/${blockingUser._id}/block`, {
         isBlocked: true,
         blockedUntil: blockingUser.blockedUntil
       }, {
@@ -97,7 +97,7 @@ export default function AdminPanelPage() {
 
   const handleUnblock = async (id) => {
     try {
-      await axios.post(`https://academiq-production-0920.up.railway.app/api/admin/manage/users/${id}/block`, {
+      await axios.post(`${API_BASE_URL}/api/admin/manage/users/${id}/block`, {
         isBlocked: false
       }, {
         headers: { Authorization: `Bearer ${adminToken}` }
@@ -119,7 +119,7 @@ export default function AdminPanelPage() {
     setAdminChatLoading(true);
 
     try {
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/admin/manage/assistant", {
+      const { data } = await axios.post(`${API_BASE_URL}/api/admin/manage/assistant`, {
         message: command
       }, {
         headers: { Authorization: `Bearer ${adminToken}` }
@@ -153,26 +153,26 @@ export default function AdminPanelPage() {
           <p className="text-sm text-slate-500 font-bold uppercase tracking-widest opacity-60">System Management Dashboard</p>
         </div>
         <div className="flex items-center gap-4">
-          <Link href="/admin/analytics" className="px-6 py-3 bg-brandA/10 text-brandA rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brandA/20 transition-all flex items-center gap-2">
+          <Link href="/admin/analytics" className="px-6 py-3 bg-brandA/10 text-brandA rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-brandA/20 transition-colors duration-150 flex items-center gap-2">
             <FiPieChart className="w-4 h-4" />
             Analytics Dashboard
           </Link>
           <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl">
             <button 
               onClick={() => setActiveTab("users")}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'users' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${activeTab === 'users' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
             >
               Users
             </button>
             <button 
               onClick={() => setActiveTab("content")}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'content' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${activeTab === 'content' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
             >
               Content
             </button>
             <button 
               onClick={() => setActiveTab("assistant")}
-              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === 'assistant' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
+              className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors duration-150 flex items-center gap-2 ${activeTab === 'assistant' ? 'bg-white dark:bg-slate-800 shadow-sm text-brandA' : 'text-slate-500'}`}
             >
               <FiMessageSquare className="w-3.5 h-3.5" />
               AI Chat
@@ -181,15 +181,9 @@ export default function AdminPanelPage() {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div>
         {activeTab === "users" ? (
-          <motion.div 
-            key="users"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="flex flex-col gap-2"
-          >
+          <div className="flex flex-col gap-2">
             <ManagementBar 
               onSearch={(val) => setSearchTerm(val.toLowerCase())}
               onFilter={() => toast("Filter clicked")}
@@ -254,10 +248,10 @@ export default function AdminPanelPage() {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => setEditingUser(u)} className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all" title="Edit">✏️</button>
-                          <button onClick={() => setBlockingUser(u)} className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all" title="Block">🚫</button>
-                          {u.isBlocked && <button onClick={() => handleUnblock(u._id)} className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-all" title="Unblock">🔓</button>}
-                          <button onClick={() => handleDeleteUser(u._id)} className="p-2 hover:bg-rose-50 text-rose-500 rounded-lg transition-all" title="Delete">🗑️</button>
+                          <button onClick={() => setEditingUser(u)} aria-label="Edit user" className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors" title="Edit"><FiEdit2 className="w-4 h-4" /></button>
+                          <button onClick={() => setBlockingUser(u)} aria-label="Block user" className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors" title="Block"><FiSlash className="w-4 h-4" /></button>
+                          {u.isBlocked && <button onClick={() => handleUnblock(u._id)} aria-label="Unblock user" className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors" title="Unblock"><FiUnlock className="w-4 h-4" /></button>}
+                          <button onClick={() => handleDeleteUser(u._id)} aria-label="Delete user" className="p-2 hover:bg-rose-50 text-rose-500 rounded-lg transition-colors" title="Delete"><FiTrash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -266,15 +260,9 @@ export default function AdminPanelPage() {
               </table>
             </div>
             </div>
-          </motion.div>
+          </div>
         ) : activeTab === "content" ? (
-          <motion.div 
-            key="content"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="card p-10 max-w-xl mx-auto"
-          >
+          <div className="card p-10 max-w-xl mx-auto">
             <h2 className="text-xl font-black uppercase tracking-tightest mb-6">Upload Presentation</h2>
             <form onSubmit={async (e) => {
               e.preventDefault();
@@ -298,19 +286,13 @@ export default function AdminPanelPage() {
               <input name="title" className="input py-4" placeholder="Presentation Title" required />
               <input name="category" className="input py-4" placeholder="Category" required />
               <input name="fileUrl" className="input py-4" placeholder="File URL (https://...)" required />
-              <button disabled={loading} className="btn-primary w-full py-4 text-[10px] font-black uppercase tracking-widest">
-                {loading ? t("loading") : "Upload Presentation ✨"}
+              <button disabled={loading} className="btn-primary w-full py-4 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                {loading ? t("loading") : <><FiUpload className="w-4 h-4" /> Upload Presentation</>}
               </button>
             </form>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            key="assistant"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="card p-0 overflow-hidden border-none shadow-2xl max-w-4xl mx-auto"
-          >
+          <div className="card p-0 overflow-hidden border-none shadow-2xl max-w-4xl mx-auto">
             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-brandA text-white flex items-center justify-center shadow-lg shadow-brandA/20">
@@ -361,25 +343,22 @@ export default function AdminPanelPage() {
                 />
                 <button
                   type="submit"
+                  aria-label="Admin buyrugini yuborish"
                   disabled={!adminChatInput.trim() || adminChatLoading}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-slate-900 dark:bg-brandA text-white flex items-center justify-center disabled:opacity-20 transition-all hover:scale-105 active:scale-95"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl bg-slate-900 dark:bg-brandA text-white flex items-center justify-center disabled:opacity-20 transition-colors duration-150 hover:scale-105 active:scale-95"
                 >
                   <FiSend className="w-4 h-4" />
                 </button>
               </div>
             </form>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="card w-full max-w-md p-8 bg-white dark:bg-slate-900"
-          >
+          <div className="card w-full max-w-md p-8 bg-white dark:bg-slate-900">
             <h2 className="text-xl font-black uppercase tracking-tightest mb-6">Edit User</h2>
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div className="space-y-1">
@@ -402,7 +381,7 @@ export default function AdminPanelPage() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plan Type</label>
                 <div className="relative group">
                   <select 
-                    className="w-full py-4 px-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl font-bold text-sm appearance-none outline-none focus:ring-4 ring-brandA/10 border-2 border-transparent focus:border-brandA transition-all"
+                    className="w-full py-4 px-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl font-bold text-sm appearance-none outline-none focus:ring-4 ring-brandA/10 border-2 border-transparent focus:border-brandA transition-colors duration-150"
                     value={editingUser.planType}
                     onChange={e => setEditingUser({...editingUser, planType: e.target.value})}
                   >
@@ -440,9 +419,9 @@ export default function AdminPanelPage() {
                 <button
                   type="button"
                   onClick={() => setEditingUser({...editingUser, isUnlimitedCredits: !editingUser.isUnlimitedCredits})}
-                  className={`w-12 h-6 rounded-full transition-all relative ${editingUser.isUnlimitedCredits ? 'bg-brandA' : 'bg-slate-300 dark:bg-slate-700'}`}
+                  className={`w-12 h-6 rounded-full transition-colors duration-150 relative ${editingUser.isUnlimitedCredits ? 'bg-brandA' : 'bg-slate-300 dark:bg-slate-700'}`}
                 >
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${editingUser.isUnlimitedCredits ? 'right-1' : 'left-1'}`} />
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-colors duration-150 ${editingUser.isUnlimitedCredits ? 'right-1' : 'left-1'}`} />
                 </button>
               </div>
               <div className="flex gap-3 pt-4">
@@ -450,18 +429,14 @@ export default function AdminPanelPage() {
                 <button type="submit" className="flex-1 btn-primary py-4 rounded-xl text-[10px] font-black uppercase tracking-widest">Save Changes</button>
               </div>
             </form>
-          </motion.div>
+          </div>
         </div>
       )}
 
       {/* Block User Modal */}
       {blockingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="card w-full max-w-md p-8 bg-white dark:bg-slate-900"
-          >
+          <div className="card w-full max-w-md p-8 bg-white dark:bg-slate-900">
             <h2 className="text-xl font-black uppercase tracking-tightest mb-2">Block User</h2>
             <p className="text-xs text-slate-500 mb-6 font-medium italic">Foydalanuvchini vaqtincha yoki butunlay bloklash.</p>
             <div className="space-y-4">
@@ -478,7 +453,7 @@ export default function AdminPanelPage() {
                 <button onClick={handleBlockUser} className="flex-1 bg-rose-500 text-white py-4 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/20">Block User</button>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>

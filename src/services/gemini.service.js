@@ -19,12 +19,19 @@ class GeminiService {
     this.groqModels = [
       "llama-3.3-70b-versatile",
       "llama-3.1-70b-versatile",
-      "mixtral-8x7b-32768"
+      "mixtral-8x7b-32768",
     ];
 
     this.deepseekModels = [
       "deepseek-chat",
-      "deepseek-reasoner"
+      "deepseek-reasoner",
+    ];
+
+    this.groqVisionModels = [
+      "meta-llama/llama-4-scout-17b-16e-instruct",
+      "meta-llama/llama-4-maverick-17b-128e-instruct",
+      "llama-3.2-90b-vision-preview",
+      "llama-3.2-11b-vision-preview",
     ];
   }
 
@@ -42,11 +49,110 @@ class GeminiService {
     }
   }
 
-  /**
-   * Main generation method with waterfall fallback and plan restrictions
-   */
+  normalizePlan(plan) {
+    if (plan === "pro" || plan === "pro_plus") return plan;
+    return "free";
+  }
+
+  getProviderOrder(plan) {
+    const normalizedPlan = this.normalizePlan(plan);
+    if (normalizedPlan === "pro_plus") return ["groq", "deepseek", "gemini"];
+    if (normalizedPlan === "pro") return ["groq", "deepseek"];
+    return ["groq"];
+  }
+
+  prioritizeModel(models, requestedModel) {
+    if (!requestedModel || !models.includes(requestedModel)) return models;
+    return [requestedModel, ...models.filter((modelName) => modelName !== requestedModel)];
+  }
+
+  async tryGemini(prompt, requestedModel) {
+    if (!this.genAI) return null;
+
+    const modelsToTry = this.prioritizeModel(this.geminiModels, requestedModel);
+    for (const modelName of modelsToTry) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: modelName }, this.apiConfig);
+        const result = await model.generateContent(prompt);
+        const text = result.response.text();
+        if (text) return text;
+      } catch (error) {
+        console.warn(`Gemini [${modelName}] failed: ${error.message}`);
+      }
+    }
+
+    return null;
+  }
+
+  async tryGroq(prompt, requestedModel) {
+    const groqKey = (process.env.GROQ_API_KEY || "").trim();
+    if (!groqKey) return null;
+
+    const modelsToTry = this.prioritizeModel(this.groqModels, requestedModel);
+    for (const modelName of modelsToTry) {
+      try {
+        const { data } = await axios.post(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            model: modelName,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.35,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${groqKey}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const content = data.choices?.[0]?.message?.content;
+        if (content) return content;
+      } catch (error) {
+        console.warn(`Groq [${modelName}] failed: ${error.message}`);
+      }
+    }
+
+    return null;
+  }
+
+  async tryDeepseek(prompt, requestedModel, userPlan) {
+    const deepseekKey = (process.env.DEEPSEEK_API_KEY || "").trim();
+    if (!deepseekKey) return null;
+
+    const models = this.normalizePlan(userPlan) === "pro_plus"
+      ? this.deepseekModels
+      : ["deepseek-chat"];
+    const modelsToTry = this.prioritizeModel(models, requestedModel);
+
+    for (const modelName of modelsToTry) {
+      try {
+        const { data } = await axios.post(
+          "https://api.deepseek.com/chat/completions",
+          {
+            model: modelName,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.3,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${deepseekKey}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const content = data.choices?.[0]?.message?.content;
+        if (content) return content;
+      } catch (error) {
+        console.warn(`DeepSeek [${modelName}] failed: ${error.message}`);
+      }
+    }
+
+    return null;
+  }
+
   async generateText(prompt, requestedModel = null, userPlan = "free") {
-    // Check if requestedModel is an options object (to support flexible calls)
     let options = {};
     if (typeof requestedModel === "object" && requestedModel !== null) {
       options = requestedModel;
@@ -54,93 +160,22 @@ class GeminiService {
       options = { requestedModel, userPlan };
     }
 
-    const { requestedModel: reqModel, userPlan: plan = "free" } = options;
+    const plan = this.normalizePlan(options.userPlan || userPlan || "free");
+    const reqModel = options.requestedModel || null;
+    const providerOrder = this.getProviderOrder(plan);
 
-    // 1. Try Gemini
-    if (this.genAI) {
-      const modelsToTry = reqModel && this.geminiModels.includes(reqModel) 
-        ? [reqModel, ...this.geminiModels] 
-        : this.geminiModels;
-
-      for (const modelName of modelsToTry) {
-        try {
-          const model = this.genAI.getGenerativeModel({ model: modelName }, this.apiConfig);
-          const result = await model.generateContent(prompt);
-          const text = result.response.text();
-          if (text) return text;
-        } catch (e) {
-          console.warn(`⚠️ Gemini [${modelName}] failed: ${e.message}`);
-          continue;
-        }
-      }
+    for (const provider of providerOrder) {
+      let result = null;
+      if (provider === "groq") result = await this.tryGroq(prompt, reqModel);
+      if (provider === "deepseek") result = await this.tryDeepseek(prompt, reqModel, plan);
+      if (provider === "gemini") result = await this.tryGemini(prompt, reqModel);
+      if (result) return result;
     }
 
-    // 2. Try Groq (Available for all plans as fallback)
-    const groqKey = (process.env.GROQ_API_KEY || "").trim();
-    if (groqKey) {
-      console.log("🔄 Falling back to GROQ...");
-      for (const modelName of this.groqModels) {
-        try {
-          const { data } = await axios.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-              model: modelName,
-              messages: [{ role: "user", content: prompt }]
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${groqKey}`,
-                "Content-Type": "application/json"
-              }
-            }
-          );
-          const content = data.choices[0]?.message?.content;
-          if (content) return content;
-        } catch (e) {
-          console.warn(`⚠️ Groq [${modelName}] failed: ${e.message}`);
-          continue;
-        }
-      }
-    }
-
-    // 3. Try DeepSeek (Available for PRO and PRO+ only)
-    const deepseekKey = (process.env.DEEPSEEK_API_KEY || "").trim();
-    const canUseDeepseek = plan === "pro" || plan === "pro_plus";
-
-    if (deepseekKey && canUseDeepseek) {
-      console.log("🔄 Falling back to DEEPSEEK...");
-      const dsModels = plan === "pro_plus" ? this.deepseekModels : ["deepseek-chat"];
-
-      for (const modelName of dsModels) {
-        try {
-          const { data } = await axios.post(
-            "https://api.deepseek.com/chat/completions",
-            {
-              model: modelName,
-              messages: [{ role: "user", content: prompt }]
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${deepseekKey}`,
-                "Content-Type": "application/json"
-              }
-            }
-          );
-          const content = data.choices[0]?.message?.content;
-          if (content) return content;
-        } catch (e) {
-          console.warn(`⚠️ DeepSeek [${modelName}] failed: ${e.message}`);
-          continue;
-        }
-      }
-    }
-
-    console.error("❌ ALL AI MODELS FAILED");
-    return { error: "Barcha AI modellari limiti tugadi. Iltimos birozdan so'ng qayta urinib ko'ring." };
+    return { error: "AI modellari limiti tugadi yoki sozlanmagan. Birozdan so'ng qayta urinib ko'ring." };
   }
 
   async generateJSON(prompt, requestedModel = null, userPlan = "free", fallback = {}) {
-    // Handle overload where requestedModel is an options object
     let options = {};
     if (typeof requestedModel === "object" && requestedModel !== null) {
       options = requestedModel;
@@ -150,34 +185,73 @@ class GeminiService {
 
     const jsonPrompt = `${prompt}\n\nReturn ONLY valid JSON. Do not use markdown. Do not explain.`;
     const result = await this.generateText(jsonPrompt, options);
-    
+
     if (!result) return fallback;
     if (typeof result === "object" && result.error) return result;
     if (typeof result !== "string") return fallback;
-    
+
     return this.safeJsonParse(result) || fallback;
   }
 
   async generateFromImage(prompt, imageBufferOrBase64, mimeType = "image/jpeg") {
-    if (!this.genAI) return { error: "Gemini not configured" };
-    
-    const imageData = typeof imageBufferOrBase64 === "string" 
-      ? imageBufferOrBase64 
+    const imageData = typeof imageBufferOrBase64 === "string"
+      ? imageBufferOrBase64
       : imageBufferOrBase64.toString("base64");
 
-    for (const modelName of this.geminiModels) {
-      try {
-        const model = this.genAI.getGenerativeModel({ model: modelName }, this.apiConfig);
-        const result = await model.generateContent([
-          prompt,
-          { inlineData: { data: imageData, mimeType } }
-        ]);
-        return result.response.text();
-      } catch (e) {
-        continue;
+    if (this.genAI) {
+      for (const modelName of this.geminiModels) {
+        try {
+          const model = this.genAI.getGenerativeModel({ model: modelName }, this.apiConfig);
+          const result = await model.generateContent([
+            prompt,
+            { inlineData: { data: imageData, mimeType } },
+          ]);
+          return result.response.text();
+        } catch (error) {
+          console.warn(`Gemini vision [${modelName}] failed: ${error.message}`);
+        }
       }
     }
-    return { error: "Vision analysis failed on all models." };
+
+    const groqKey = (process.env.GROQ_API_KEY || "").trim();
+    if (groqKey) {
+      const imageUrl = `data:${mimeType};base64,${imageData}`;
+      for (const modelName of this.groqVisionModels) {
+        try {
+          const { data } = await axios.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            {
+              model: modelName,
+              messages: [
+                {
+                  role: "user",
+                  content: [
+                    { type: "text", text: prompt },
+                    { type: "image_url", image_url: { url: imageUrl } },
+                  ],
+                },
+              ],
+              temperature: 0.15,
+              max_tokens: 1800,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${groqKey}`,
+                "Content-Type": "application/json",
+              },
+              timeout: 25000,
+            }
+          );
+
+          const content = data.choices?.[0]?.message?.content;
+          if (content) return content;
+        } catch (error) {
+          console.warn(`Groq vision [${modelName}] failed: ${error.message}`);
+        }
+      }
+    }
+
+    return { error: "Rasmni tahlil qiladigan AI modeli vaqtincha ishlamadi. Iltimos, keyinroq qayta urinib ko'ring yoki rasmni aniqroq yuklang." };
   }
 }
 

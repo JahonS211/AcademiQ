@@ -53,7 +53,7 @@ const generateAITest = async (req, res, next) => {
       topic, 
       language: language || "uz",
       questionCount: safeQuestionCount,
-      userPlan: req.user.plan || "free"
+      userPlan: req.user.planType || req.user.plan || "free"
     });
 
     let remainingCredits = null;

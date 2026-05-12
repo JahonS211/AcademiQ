@@ -1,18 +1,20 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
-import { FiTool, FiCreditCard, FiStar, FiMessageCircle, FiCheckCircle, FiSend, FiZap, FiClock, FiCheckSquare } from "react-icons/fi";
+import { FiTool, FiCreditCard, FiStar, FiMessageCircle, FiCheckCircle, FiSend, FiZap, FiClock, FiCheckSquare, FiPlusCircle } from "react-icons/fi";
 import { FaTelegramPlane } from "react-icons/fa";
 
 const SUBJECTS = [
   { label: "Texnik muammo", icon: <FiTool /> },
   { label: "To'lov masalasi", icon: <FiCreditCard /> },
   { label: "Tarif haqida", icon: <FiStar /> },
+  { label: "Taklif / yangi funksiya", icon: <FiPlusCircle /> },
   { label: "Boshqa savol", icon: <FiMessageCircle /> },
 ];
 
@@ -31,6 +33,7 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  const isSuggestion = subject === "Taklif / yangi funksiya";
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -39,7 +42,7 @@ export default function SupportPage() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-production-0920.up.railway.app/"}/api/support`,
+        `${API_BASE_URL}/api/support`,
         { subject, message },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -127,16 +130,21 @@ export default function SupportPage() {
               <form onSubmit={handleSend} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
-                    Xabaringiz
+                    {isSuggestion ? "Taklifingiz" : "Xabaringiz"}
                   </label>
                   <textarea
                     className="input h-40 py-4 px-5 rounded-2xl resize-none bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-indigo-500/20 text-sm font-medium leading-relaxed"
-                    placeholder="Muammoingizni yoki savolingizni yozing..."
+                    placeholder={isSuggestion ? "Qanday funksiya kerak, qaysi sahifaga qo'shilsin va nima uchun foydali bo'lishini yozing..." : "Muammoingizni yoki savolingizni yozing..."}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     required
                   />
                 </div>
+                {isSuggestion && (
+                  <div className="rounded-2xl border border-indigo-500/15 bg-indigo-500/5 p-4 text-xs font-semibold leading-6 text-slate-500 dark:text-slate-300">
+                    Taklif yozishda funksiya nomi, qayerda ko'rinishi, qanday ishlashi va sizga qanday yordam berishini qisqa yozsangiz, tezroq ko'rib chiqamiz.
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={loading}
@@ -155,6 +163,37 @@ export default function SupportPage() {
 
         {/* Right: Telegram link + FAQ */}
         <div className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.12 }}
+            className="card border-violet-500/15 bg-gradient-to-br from-violet-50 to-indigo-50/60 p-7 dark:from-violet-950/20 dark:to-indigo-950/10"
+          >
+            <div className="mb-4 flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-xl text-white shadow-lg shadow-violet-600/20">
+                <FiPlusCircle />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-500">Takliflar</p>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Yangi funksiya so'rang</h3>
+              </div>
+            </div>
+            <p className="text-sm font-semibold leading-7 text-slate-500 dark:text-slate-300">
+              Saytda kerak bo'lgan yangi bo'lim, qulaylik yoki AI funksiyani yozib qoldiring. Adminlar ko'rib chiqib, kerakli joyga qo'shadi.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSubject("Taklif / yangi funksiya");
+                setSent(false);
+              }}
+              className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-xl shadow-violet-600/20"
+            >
+              Taklif yozish
+              <FiSend />
+            </button>
+          </motion.div>
+
           {/* Telegram Card */}
           <motion.a
             href="https://t.me/academiq_help"

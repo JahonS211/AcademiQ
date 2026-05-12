@@ -13,17 +13,28 @@ const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID;
 // Mock function if bot token is not valid
 let isBotReady = false;
 
-try {
-  if (process.env.TELEGRAM_BOT_TOKEN) {
-    bot.launch();
-    isBotReady = true;
-    console.log("Telegram bot is running");
-  } else {
+let launchPromise = null;
+
+const startTelegramBot = () => {
+  if (isBotReady || launchPromise) return launchPromise;
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
     console.warn("TELEGRAM_BOT_TOKEN is not set. Bot will not send actual messages.");
+    return null;
   }
-} catch (error) {
-  console.error("Failed to launch telegram bot:", error);
-}
+
+  launchPromise = bot.launch()
+    .then(() => {
+      isBotReady = true;
+      console.log("Telegram bot is running");
+    })
+    .catch((error) => {
+      isBotReady = false;
+      launchPromise = null;
+      console.warn("Telegram bot disabled:", error.message);
+    });
+
+  return launchPromise;
+};
 
 bot.start((ctx) => {
   if (ctx.from.id.toString() === ADMIN_ID) {
@@ -437,6 +448,7 @@ process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
 module.exports = {
+  startTelegramBot,
   sendPaymentRequestToAdmin,
   sendSupportMessageToAdmin,
 };

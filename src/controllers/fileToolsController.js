@@ -13,11 +13,14 @@ const createZipArchive = (options) => {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (req, file, cb) => {
+    const safeName = String(file.originalname || "file").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-90);
+    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
+  },
 });
 
-const uploadSingle = multer({ storage }).single("file");
-const uploadMultiple = multer({ storage }).array("files", 20); // Up to 20 files for ZIP
+const uploadSingle = multer({ storage, limits: { fileSize: 12 * 1024 * 1024 } }).single("file");
+const uploadMultiple = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 } }).array("files", 20); // Up to 20 files for ZIP
 
 const handleToolRequest = async (req, res, next, mockResponse) => {
   try {
@@ -147,26 +150,33 @@ const imageToPdf = async (req, res, next) => {
     if (err) return res.status(400).json({ success: false, message: "Upload failed" });
     if (!req.file) return res.status(400).json({ success: false, message: "No file provided" });
 
+    const ext = path.extname(req.file.originalname || req.file.path).toLowerCase();
+    const allowed = new Set([".jpg", ".jpeg", ".png"]);
+    if (!allowed.has(ext)) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(400).json({ success: false, message: "PDF uchun PNG yoki JPG rasm yuklang" });
+    }
+
+    const fileName = `output-${Date.now()}.pdf`;
+    const filePath = path.join(__dirname, "../../uploads", fileName);
+    const stream = fs.createWriteStream(filePath);
+
     try {
-      let remainingCredits = null;
-      if (req.deductCredits) {
-        remainingCredits = await req.deductCredits(`Image to PDF: ${req.file.originalname}`);
-      }
-
-      const doc = new PDFDocument();
-      const fileName = `output-${Date.now()}.pdf`;
-      const filePath = path.join(__dirname, "../../uploads", fileName);
-      const stream = fs.createWriteStream(filePath);
-
+      const doc = new PDFDocument({ autoFirstPage: false, compress: true });
       doc.pipe(stream);
+      doc.addPage({ size: "A4", margin: 36 });
       doc.image(req.file.path, {
-        fit: [500, 700],
+        fit: [523, 770],
         align: "center",
         valign: "center",
       });
       doc.end();
 
-      stream.on("finish", () => {
+      stream.on("finish", async () => {
+        let remainingCredits = null;
+        if (req.deductCredits) {
+          remainingCredits = await req.deductCredits(`Image to PDF: ${req.file.originalname}`);
+        }
         fs.unlink(req.file.path, () => {});
         res.status(200).json({
           success: true,
@@ -175,14 +185,19 @@ const imageToPdf = async (req, res, next) => {
           remainingCredits,
         });
       });
+
+      stream.on("error", (error) => {
+        console.error("PDF stream error:", error);
+        fs.unlink(req.file.path, () => {});
+        if (!res.headersSent) res.status(500).json({ success: false, message: "PDF yaratishda xatolik" });
+      });
     } catch (error) {
       console.error("Image to PDF Error:", error);
-      if (req.file) fs.unlink(req.file.path, () => {});
-      return res.status(500).json({ success: false, message: "Error converting image to PDF" });
+      fs.unlink(req.file.path, () => {});
+      return res.status(500).json({ success: false, message: "Rasmni PDFga aylantirib bo'lmadi" });
     }
   });
 };
-
 const translateText = async (req, res, next) => {
   try {
     const { text, targetLanguage } = req.body;
@@ -191,7 +206,7 @@ const translateText = async (req, res, next) => {
     }
 
     const prompt = `Translate the following text into ${targetLanguage}. Return ONLY the translated text.\n\nText: "${text}"`;
-    const translatedText = await geminiService.generateText(prompt, null, req.user.plan || "free");
+    const translatedText = await geminiService.generateText(prompt, null, req.user.planType || req.user.plan || "free");
 
     if (!translatedText || translatedText.error) {
       return res.status(503).json({ 

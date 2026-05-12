@@ -4,13 +4,37 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useI18n } from "../lib/i18n";
-import Navbar from "../components/Navbar";
+import { FiArrowRight, FiBookOpen, FiCheckCircle, FiEdit3, FiFileText, FiGlobe, FiLayers, FiPieChart, FiShield, FiZap } from "react-icons/fi";
 import PathMorphing from "../components/PathMorphing";
 import { HexagonBackground } from "../components/HexagonBackground";
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" } },
+};
+
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+
+const tools = [
+  { title: "Insho Generator", desc: "Mavzu, til va uzunlikni tanlang. Kirish, asosiy qism va xulosa bilan tayyor matn oling.", icon: FiEdit3, tone: "text-indigo-500 bg-indigo-500/10" },
+  { title: "Tarjimon", desc: "O'zbekcha, ruscha va inglizcha matnlarni kredit yechmasdan tarjima qiling.", icon: FiGlobe, tone: "text-cyan-500 bg-cyan-500/10" },
+  { title: "Prezentatsiya", desc: "Pro tariflarda mavzuga mos slayd, dizayn va rasmlar bilan taqdimot tayyorlanadi.", icon: FiPieChart, tone: "text-violet-500 bg-violet-500/10" },
+  { title: "Test va Flashcard", desc: "Savollar soni yoki kartalar sonini tanlab, mavzuni mustahkamlash uchun material yarating.", icon: FiLayers, tone: "text-emerald-500 bg-emerald-500/10" },
+  { title: "AI Detector", desc: "Matn uslubi, takrorlanish va aniqlik bo'yicha AI ehtimolini sabablar bilan ko'rsatadi.", icon: FiShield, tone: "text-blue-500 bg-blue-500/10" },
+  { title: "Fayl asboblari", desc: "Rasmni PDFga aylantirish, rasm matnini olish, konvertor va ZIP arxivator.", icon: FiFileText, tone: "text-rose-500 bg-rose-500/10" },
+];
+
+const steps = [
+  "Mavzuni yoki matnni kiriting",
+  "Til, uzunlik, slayd yoki savollar sonini tanlang",
+  "AcademiQ natijani toza formatda tayyorlaydi",
+  "Natijani nusxalang, yuklab oling yoki davom ettiring",
+];
+
 export default function HomePage() {
-  const { t } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
@@ -20,129 +44,145 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] dark:bg-slate-950 overflow-x-hidden relative font-sans">
-      <Navbar />
-      
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-white">
       <HexagonBackground />
 
-      {/* Massive Background Blobs matching DeceptiConf */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-blue-500/15 dark:bg-blue-600/15 blur-[80px] rounded-full mix-blend-multiply dark:mix-blend-lighten will-change-transform" />
-        <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-purple-500/15 dark:bg-purple-600/15 blur-[80px] rounded-full mix-blend-multiply dark:mix-blend-lighten will-change-transform" />
-        <div className="absolute top-[20%] left-[20%] w-[35%] h-[35%] bg-cyan-400/15 dark:bg-cyan-500/15 blur-[80px] rounded-full mix-blend-multiply dark:mix-blend-lighten will-change-transform" />
-      </div>
+      <section className="relative min-h-[92vh] overflow-hidden border-b border-slate-200/70 bg-[linear-gradient(135deg,#eef4ff_0%,#f8fbff_45%,#f5f0ff_100%)] pt-28 dark:border-slate-800 dark:bg-[linear-gradient(135deg,#07111f_0%,#0b1020_48%,#180f2d_100%)]">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(79,70,229,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(79,70,229,0.08)_1px,transparent_1px)] bg-[size:48px_48px] opacity-70" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-20 min-h-screen flex flex-col justify-between">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-24 flex-1 mt-12">
-          
-          {/* Left: Typography */}
-          <div className="flex-1 max-w-2xl text-center lg:text-left">
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="mb-6 flex items-center justify-center lg:justify-start gap-4 text-blue-600 dark:text-blue-400 font-mono text-[10px] uppercase tracking-[0.3em] font-black"
-            >
-              <span>{t("kelajakTaIimi")}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
-              <span>ACADEMIQ.UZ</span>
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+          className="relative z-10 mx-auto flex min-h-[calc(92vh-7rem)] max-w-7xl flex-col justify-center px-6 pb-16"
+        >
+          <div className="max-w-3xl">
+            <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-3 rounded-full border border-indigo-500/20 bg-white/70 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-indigo-600 shadow-sm backdrop-blur dark:bg-slate-900/60 dark:text-indigo-300">
+              <FiZap className="h-4 w-4" />
+              AcademiQ AI Education Platform
             </motion.div>
-            
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-black text-blue-700 dark:text-blue-500 tracking-tighter leading-[0.85] mb-8"
-            >
-              {t("heroTitle").split("—").map((part, i) => (
-                <div key={i} className={i === 1 ? "text-slate-900 dark:text-white mt-2" : ""}>
-                  {part.trim()}
-                  {i === 0 && <span className="text-slate-900 dark:text-white">.</span>}
-                </div>
-              ))}
+
+            <motion.h1 variants={fadeUp} className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-slate-950 dark:text-white md:text-7xl lg:text-8xl">
+              Aql bilan o'qing. Natijani tezroq oling.
             </motion.h1>
 
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base md:text-lg text-slate-600 dark:text-slate-400 font-bold leading-relaxed max-w-lg mb-12 mx-auto lg:mx-0"
-            >
-              {t("heroDesc")}
+            <motion.p variants={fadeUp} className="mt-7 max-w-2xl text-base font-semibold leading-relaxed text-slate-600 dark:text-slate-300 md:text-lg">
+              AcademiQ insho yozish, tarjima qilish, test tuzish, prezentatsiya tayyorlash va fayl ishlari uchun yagona AI platforma. Free tarifda insho va tarjimon, Pro tariflarda esa to'liq o'quv asboblari ishlaydi.
             </motion.p>
+
+            <motion.div variants={fadeUp} className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Link href="/register" className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-2xl bg-slate-950 px-7 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-2xl shadow-slate-950/20 transition-transform hover:scale-[1.02] active:scale-95 dark:bg-white dark:text-slate-950">
+                Boshlash <FiArrowRight />
+              </Link>
+              <Link href="/pricing" className="inline-flex min-h-[56px] items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white/80 px-7 text-[11px] font-black uppercase tracking-[0.2em] text-slate-700 shadow-sm backdrop-blur transition-colors hover:border-indigo-500/40 hover:text-indigo-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                Tariflarni ko'rish
+              </Link>
+            </motion.div>
           </div>
 
-          {/* Right: Floating Mobile/Widget Preview */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex-1 w-full max-w-[420px] relative"
+          <motion.div
+            initial={{ opacity: 0, x: 80, rotate: 2 }}
+            animate={{ opacity: 1, x: 0, rotate: 0 }}
+            transition={{ duration: 0.8, delay: 0.25, ease: "easeOut" }}
+            className="pointer-events-none absolute bottom-[-70px] right-[-40px] hidden w-[620px] rounded-[2rem] border border-white/50 bg-slate-950 p-4 shadow-[0_40px_100px_rgba(15,23,42,0.35)] dark:border-white/10 lg:block"
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-[3rem] blur-3xl opacity-20" />
-            <div className="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-3xl border border-white dark:border-white/10 rounded-[3rem] p-8 shadow-2xl overflow-hidden flex flex-col items-center text-center">
-              
-              <div className="flex items-center justify-between w-full mb-8 opacity-60">
-                <span className="font-mono text-[9px] text-blue-600 dark:text-blue-400 uppercase tracking-widest font-black">AI System Active</span>
-                <div className="flex gap-1">
-                  <div className="w-1 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                  <div className="w-1 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                  <div className="w-1 h-3 bg-blue-600 rounded-full animate-bounce" />
+            <div className="rounded-[1.5rem] bg-[#07111f] p-5 text-white">
+              <div className="mb-5 flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <img src="/logo.png" alt="AcademiQ" className="h-10 w-10 rounded-full bg-white object-contain" />
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-wide">AcademiQ Dashboard</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">AI models ready</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-emerald-300">Active</span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  ["Insho", "17 kredit", "bg-indigo-500"],
+                  ["Tarjimon", "Bepul", "bg-cyan-500"],
+                  ["Test", "9 kredit", "bg-emerald-500"],
+                ].map(([name, cost, color]) => (
+                  <div key={name} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <span className={`mb-4 block h-2 w-10 rounded-full ${color}`} />
+                    <p className="text-xs font-black uppercase">{name}</p>
+                    <p className="mt-1 text-[10px] font-bold text-slate-400">{cost}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">AI javob</p>
+                  <FiBookOpen className="text-indigo-300" />
+                </div>
+                <div className="space-y-2">
+                  <span className="block h-3 w-full rounded bg-white/10" />
+                  <span className="block h-3 w-10/12 rounded bg-white/10" />
+                  <span className="block h-3 w-7/12 rounded bg-white/10" />
                 </div>
               </div>
-
-              <div className="flex-1 flex flex-col items-center justify-center relative w-full mb-8">
-                 <div className="mb-8 flex justify-center w-full">
-                    <PathMorphing />
-                 </div>
-                 
-                <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-none mb-4">
-                  {t("cardTitle")}
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-bold leading-relaxed max-w-[240px] mx-auto uppercase tracking-wide">
-                  {t("cardDesc")}
-                </p>
-              </div>
-
-              <Link 
-                href="/register" 
-                className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] text-center transition-all shadow-2xl hover:scale-[1.02] active:scale-95"
-              >
-                {t("cardButton")}
-              </Link>
             </div>
           </motion.div>
-
-        </div>
-
-
-        {/* Footer Stats Row */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-20 border-t border-slate-200/50 dark:border-slate-800/50 pt-10 flex flex-wrap gap-12 md:gap-24"
-        >
-          <div>
-            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-[0.2em] mb-2">{t("essaysWritten")}</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">14,209</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-[0.2em] mb-2">{t("totalUsers")}</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">5,032</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-[0.2em] mb-2">{t("satisfaction")}</p>
-            <p className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">98%</p>
-          </div>
-          <div className="flex-1 flex justify-end items-center">
-            <Link href="/pricing" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors">
-              {t("exploreTariffs")} →
-            </Link>
-          </div>
         </motion.div>
+      </section>
 
-      </div>
+      <section id="features" className="relative border-b border-slate-200/70 bg-white py-20 dark:border-slate-800 dark:bg-slate-950">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger} className="mb-12 max-w-3xl">
+            <motion.p variants={fadeUp} className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-500">Platforma imkoniyatlari</motion.p>
+            <motion.h2 variants={fadeUp} className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">O'qish uchun kerakli asboblar bir joyda</motion.h2>
+            <motion.p variants={fadeUp} className="mt-4 text-sm font-semibold leading-relaxed text-slate-500 dark:text-slate-400 md:text-base">Har bir bo'lim aniq vazifa uchun qurilgan: matn yozish, tarjima, tekshirish, slayd, test va fayl ishlarini alohida ochib yurmasdan bajarish mumkin.</motion.p>
+          </motion.div>
+
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }} variants={stagger} className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {tools.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <motion.div key={tool.title} variants={fadeUp} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition-transform hover:-translate-y-1 dark:border-slate-800 dark:bg-slate-900/70">
+                  <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl text-xl ${tool.tone}`}>
+                    <Icon />
+                  </div>
+                  <h3 className="text-base font-black uppercase tracking-wide text-slate-950 dark:text-white">{tool.title}</h3>
+                  <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-500 dark:text-slate-400">{tool.desc}</p>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-20 dark:bg-[#07111f]">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-500">Qanday ishlaydi</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">Oddiy, tez va tartibli jarayon</h2>
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-slate-500 dark:text-slate-400 md:text-base">AcademiQ foydalanuvchini ortiqcha sozlamalar bilan charchatmaydi. Siz mavzu yoki matnni berasiz, platforma esa natijani o'qishga qulay formatda chiqaradi.</p>
+          </motion.div>
+
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger} className="grid gap-4 sm:grid-cols-2">
+            {steps.map((step, index) => (
+              <motion.div key={step} variants={fadeUp} className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <span className="text-3xl font-black text-indigo-500/30">0{index + 1}</span>
+                <p className="mt-4 text-sm font-black uppercase leading-relaxed tracking-wide text-slate-800 dark:text-slate-100">{step}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-slate-950 py-16 text-white dark:border-slate-800">
+        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-300">AcademiQ</p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight md:text-5xl">Bugun insho va tarjimadan boshlang, kerak bo'lsa Pro bilan kengaytiring.</h2>
+          </div>
+          <Link href="/register" className="inline-flex min-h-[58px] shrink-0 items-center justify-center gap-3 rounded-2xl bg-white px-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-950 shadow-xl transition-transform hover:scale-[1.02] active:scale-95">
+            Akkaunt yaratish <FiCheckCircle />
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -81,7 +82,7 @@ export default function PricingPage() {
 
     setLoading(plan);
     try {
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/payment/create", 
+      const { data } = await axios.post(`${API_BASE_URL}/api/payment/create`, 
         { plan, promoCode: promoInfo?.code || promoCode || "", useRewards: overrideRewards }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -106,7 +107,7 @@ export default function PricingPage() {
     const interval = setInterval(async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data } = await axios.get(`https://academiq-production-0920.up.railway.app/api/payment/status/${code}`, {
+        const { data } = await axios.get(`${API_BASE_URL}/api/payment/status/${code}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -140,7 +141,7 @@ export default function PricingPage() {
     if (!supportMsg) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-production-0920.up.railway.app/api/payment/support", 
+      await axios.post(`${API_BASE_URL}/api/payment/support`, 
         { message: supportMsg }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -166,7 +167,7 @@ export default function PricingPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-production-0920.up.railway.app/api/payment/upload-receipt", formData, {
+      await axios.post(`${API_BASE_URL}/api/payment/upload-receipt`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"

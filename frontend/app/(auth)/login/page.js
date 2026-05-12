@@ -1,32 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import toast from "react-hot-toast";
 import { useGoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
+import { FcGoogle } from "react-icons/fc";
+import { FiArrowRight, FiLock, FiMail } from "react-icons/fi";
 import { authApi } from "../../../lib/api";
-import { useI18n } from "../../../lib/i18n";
-import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { t } = useI18n();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      router.push("/dashboard");
+    }
+  }, [router]);
+
+  const saveSession = (data) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    toast.success("Xush kelibsiz!");
+    router.push("/dashboard");
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const { data } = await authApi.login(form);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      toast.success(t("loginSuccess"));
-      router.push("/dashboard");
+      saveSession(data);
     } catch (error) {
-      toast.error(error.response?.data?.message || t("loginFailed"));
+      toast.error(error.response?.data?.message || "Email yoki parol noto'g'ri");
     } finally {
       setLoading(false);
     }
@@ -38,97 +48,98 @@ export default function LoginPage() {
       try {
         const { data } = await authApi.googleLogin({
           token: tokenResponse.access_token,
-          isAccessToken: true
+          isAccessToken: true,
         });
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        toast.success(t("loginSuccess"));
-        router.push("/dashboard");
-      } catch (err) {
-        toast.error(t("googleLoginFailed"));
+        saveSession(data);
+      } catch (_) {
+        toast.error("Google orqali kirishda xatolik");
       } finally {
         setLoading(false);
       }
     },
-    onError: () => toast.error(t("googleLoginFailed")),
+    onError: () => toast.error("Google orqali kirishda xatolik"),
   });
 
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-3xl font-black mb-1 tracking-tightest uppercase">{t("login")}</h2>
-        <p className="text-xs text-slate-500 font-bold opacity-70">{t("welcome")}</p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="mx-auto w-full max-w-md"
+    >
+      <div className="rounded-[34px] border border-white/80 bg-white/90 p-6 shadow-2xl shadow-indigo-200/50 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.07] dark:shadow-black/30 sm:p-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 dark:bg-white/90">
+            <Image src="/logo.png" alt="AcademiQ" width={44} height={44} className="rounded-xl" />
+          </div>
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-indigo-500 dark:text-indigo-300">Akkaunt</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Kirish</h1>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-300">AcademiQ panelingizga qayting va ishni davom ettiring.</p>
+        </div>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">{t("emailAddress") || "Email Address"}</label>
-          <input 
-            className="input py-4 px-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-brandA/20 text-sm font-bold" 
-            placeholder="example@gmail.com" 
-            type="email" 
-            value={form.email} 
-            onChange={(e) => setForm({ ...form, email: e.target.value })} 
-            required 
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">{t("password")}</label>
-          <input 
-            className="input py-4 px-6 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-brandA/20 text-sm font-bold" 
-            placeholder="••••••••" 
-            type="password" 
-            value={form.password} 
-            onChange={(e) => setForm({ ...form, password: e.target.value })} 
-            required 
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative">
-              <input 
-                type="checkbox" 
-                className="peer sr-only" 
+        <form onSubmit={onSubmit} className="space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400">Email</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 dark:border-white/10 dark:bg-slate-950/60 dark:text-white dark:focus-within:bg-slate-950">
+              <FiMail className="text-slate-400" />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+                className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400"
+                placeholder="email@example.com"
               />
-              <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-md transition-all peer-checked:bg-blue-600 peer-checked:border-blue-600 group-hover:border-blue-600/50" />
-              <svg className="absolute inset-0 w-5 h-5 text-white scale-0 transition-transform peer-checked:scale-100 p-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors group-hover:text-slate-700 dark:group-hover:text-slate-300">{t("rememberMe")}</span>
           </label>
-        </div>
-        
-        <button 
-          className="btn-primary w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-brandA/20 transition-all hover:scale-[1.02] mt-2" 
-          disabled={loading}
-        >
-          {loading ? t("loading") : t("login") + " 🚀"}
-        </button>
-      </form>
-      
-      <div className="mt-8 relative flex items-center justify-center">
-        <div className="border-t border-slate-100 dark:border-slate-800 w-full absolute"></div>
-        <span className="bg-white dark:bg-slate-950 px-6 text-[10px] font-black text-slate-300 relative z-10 uppercase tracking-[0.3em]">OR</span>
-      </div>
 
-      <div className="mt-6 flex flex-col items-center gap-5">
-        <button 
+          <label className="block">
+            <span className="mb-2 block text-xs font-black uppercase tracking-[0.22em] text-slate-400">Parol</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 dark:border-white/10 dark:bg-slate-950/60 dark:text-white dark:focus-within:bg-slate-950">
+              <FiLock className="text-slate-400" />
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                required
+                className="w-full bg-transparent text-sm font-bold outline-none placeholder:text-slate-400"
+                placeholder="Parolingiz"
+              />
+            </div>
+          </label>
+
+          <button
+            className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-white shadow-xl shadow-indigo-500/25 transition hover:-translate-y-0.5 hover:shadow-indigo-500/35 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={loading}
+          >
+            {loading ? "Kutilmoqda..." : "Kirish"}
+            <FiArrowRight className="transition group-hover:translate-x-1" />
+          </button>
+        </form>
+
+        <div className="my-6 flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+          <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+          yoki
+          <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+        </div>
+
+        <button
           onClick={() => googleLogin()}
           type="button"
-          className="w-full py-3.5 rounded-2xl bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4 hover:bg-slate-50 transition-all shadow-sm group"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-black text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 dark:border-white/10 dark:bg-white/10 dark:text-white"
         >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
-          <span className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">{t("continueWithGoogle")}</span>
+          <FcGoogle size={21} />
+          Google orqali kirish
         </button>
 
-        <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-          {t("noData")}?{" "}
-          <Link href="/register" className="text-brandA hover:underline decoration-2 underline-offset-4 ml-2">
-            {t("register")}
+        <p className="mt-7 text-center text-sm font-semibold text-slate-500 dark:text-slate-300">
+          Hali akkauntingiz yo'qmi?{" "}
+          <Link href="/register" className="font-black text-indigo-600 hover:text-indigo-500 dark:text-indigo-300">
+            Ro'yxatdan o'tish
           </Link>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

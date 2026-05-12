@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -7,9 +8,11 @@ import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
 import { syncUserCredits } from "../../lib/syncUtils";
-import { FiZap, FiLayers, FiRefreshCw, FiGlobe, FiTrash2 } from "react-icons/fi";
+import { flashcardsCreditCost } from "../../lib/creditCosts";
+import { FiZap, FiLayers, FiRefreshCw, FiTrash2 } from "react-icons/fi";
 import CustomSelect from "../../components/CustomSelect";
 import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
+import BackButton from "../../components/BackButton";
 
 export default function FlashcardsPage() {
   const { t } = useI18n();
@@ -24,9 +27,11 @@ export default function FlashcardsPage() {
 
   const langOptions = [
     { value: "uz", label: "O'zbekcha" },
-    { value: "ru", label: "Русский" },
+    { value: "ru", label: "Ruscha" },
     { value: "en", label: "English" },
   ];
+
+  const creditCost = flashcardsCreditCost(count);
 
   const countOptions = [
     { value: 4, label: "4 karta" },
@@ -50,7 +55,7 @@ export default function FlashcardsPage() {
     setFlipped({});
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/flashcards", {
+      const { data } = await axios.post(`${API_BASE_URL}/api/flashcards`, {
         topic, count, language
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -78,57 +83,47 @@ export default function FlashcardsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 py-6 px-4">
-      <div className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl relative overflow-visible">
+      <BackButton fallback="/tools" />
+      <div className="card p-6 md:p-8 bg-white dark:bg-slate-900 border-none shadow-xl relative overflow-visible">
         <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full -mr-8 -mt-8 blur-2xl" />
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl">
+        <div className="grid gap-6 lg:grid-cols-[auto_1fr] lg:items-start">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl shrink-0">
               <FiLayers />
             </div>
-            <div>
-              <h1 className="text-2xl font-black tracking-tighter uppercase">{t("activeRecall")}</h1>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-black tracking-tighter uppercase leading-tight">{t("activeRecall")}</h1>
               <p className="text-slate-500 font-bold uppercase text-[8px] tracking-[0.2em]">{t("studyTool")}</p>
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 flex-1 max-w-3xl">
+          <div className="grid gap-3 w-full">
             <input 
-              className="input flex-1 py-3.5 px-6 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-indigo-500/20 font-bold text-sm" 
+              className="input w-full min-h-[54px] py-4 px-6 rounded-xl bg-slate-50 dark:bg-slate-800/50 border-none focus:ring-2 ring-indigo-500/20 font-bold text-sm" 
               placeholder={t("enterTopicPhotosynthesis")} 
               value={topic}
               onChange={e => setTopic(e.target.value)}
             />
-            <div className="w-full md:w-40 relative z-50">
-              <CustomSelect 
-                value={language}
-                onChange={setLanguage}
-                options={langOptions}
-                icon={<FiGlobe />}
-              />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[160px_150px_1fr] items-stretch">
+              <CustomSelect value={language} onChange={setLanguage} options={langOptions} />
+              <CustomSelect value={count} onChange={setCount} options={countOptions} />
+              <button 
+                onClick={handleGenerate} 
+                disabled={loading}
+                className="min-h-[54px] px-8 py-3.5 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-600/20 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 group whitespace-nowrap sm:col-span-2 lg:col-span-1"
+              >
+                {loading ? (
+                  <FiRefreshCw className="animate-spin" />
+                ) : (
+                  <>
+                    <span>YARATISH</span>
+                    <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+                    <span className="px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter">{creditCost} {t("credits").toUpperCase()}</span>
+                  </>
+                )}
+              </button>
             </div>
-            <div className="w-full md:w-36 relative z-50">
-              <CustomSelect 
-                value={count}
-                onChange={setCount}
-                options={countOptions}
-              />
-            </div>
-            <button 
-              onClick={handleGenerate} 
-              disabled={loading}
-              className="px-8 py-3.5 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 group whitespace-nowrap"
-            >
-              {loading ? (
-                <FiRefreshCw className="animate-spin" />
-              ) : (
-                <>
-                  <span>YARATISH</span>
-                  <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                  <span className="ml-2 px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter">{t("credits").toUpperCase()}</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>

@@ -29,7 +29,7 @@ FAQAT va FAQAT quyidagi JSON formatida javob bering (boshqa hech narsa yozmang):
 {"introduction":"...", "body":"...", "conclusion":"..."}
     `.trim();
 
-    const generated = await geminiService.generateJSON(prompt, null, req.user.plan || "free");
+    const generated = await geminiService.generateJSON(prompt, null, req.user.planType || req.user.plan || "free");
 
     if (generated.error) {
       return res.status(503).json({ success: false, message: generated.error });

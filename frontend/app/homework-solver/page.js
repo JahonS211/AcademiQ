@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { API_BASE_URL } from "../../lib/config";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
 import { syncUserCredits } from "../../lib/syncUtils";
-import { FiZap, FiBookOpen, FiCopy, FiCheck, FiTrash2 } from "react-icons/fi";
+import { homeworkCreditCost } from "../../lib/creditCosts";
+import { FiZap, FiBookOpen, FiCopy, FiCheck, FiTrash2, FiImage, FiX } from "react-icons/fi";
 import CustomSelect from "../../components/CustomSelect";
 import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
+import BackButton from "../../components/BackButton";
+import MathInline from "../../components/MathInline";
 
 // Simple markdown renderer with VS Code-style code blocks
 function MarkdownRenderer({ text }) {
@@ -24,10 +28,7 @@ function MarkdownRenderer({ text }) {
     if (line.trim() === "") return <div key={i} className="h-2" />;
 
     // Inline bold/code
-    const rendered = line
-      .replace(/\*\*(.+?)\*\*/g, '<strong class="font-black text-slate-900 dark:text-white">$1</strong>')
-      .replace(/`(.+?)`/g, '<code class="px-1.5 py-0.5 bg-slate-800 text-emerald-400 rounded text-[12px] font-mono">$1</code>');
-    return <p key={i} className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: rendered }} />;
+    return <p key={i} className="text-sm leading-relaxed"><MathInline text={line} keyPrefix={`homework-${i}`} /></p>;
   };
 
   // Split into blocks (handle fenced code blocks)
@@ -93,18 +94,24 @@ export default function HomeworkSolverPage() {
   const [language, setLanguage] = useState("uz");
   const [solution, setSolution] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [copied, setCopied] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const fileInputRef = useRef(null);
+  const creditCost = homeworkCreditCost(question, Boolean(selectedImage));
 
   const handleSolve = async () => {
-    if (!question.trim()) return toast.error(t("enterQuestion") || "Savolni kiriting!");
+    if (!question.trim() && !selectedImage) return toast.error(t("enterQuestion") || "Savolni yoki rasmni kiriting!");
     setLoading(true);
     setSolution("");
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/homework-solver", {
-        question, subject, language
-      }, {
+      const formData = new FormData();
+      formData.append("question", question);
+      formData.append("subject", subject);
+      formData.append("language", language);
+      if (selectedImage) formData.append("image", selectedImage);
+      const { data } = await axios.post(`${API_BASE_URL}/api/homework-solver`, formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!data.success) return toast.error(data.message || "Xatolik");
@@ -132,6 +139,7 @@ export default function HomeworkSolverPage() {
   const handleClear = () => {
     setQuestion("");
     setSolution("");
+    setSelectedImage(null);
     setCopied(false);
   };
 
@@ -139,6 +147,7 @@ export default function HomeworkSolverPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-6 px-4">
+      <BackButton fallback="/tools" />
       <div className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl relative overflow-visible">
         <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-10 -mt-10 blur-3xl" />
         
@@ -177,7 +186,7 @@ export default function HomeworkSolverPage() {
                 onChange={val => setLanguage(val)}
                 options={[
                   { value: "uz", label: "O'zbekcha" },
-                  { value: "ru", label: "Русский" },
+                  { value: "ru", label: "Ruscha" },
                   { value: "en", label: "English" }
                 ]}
               />
@@ -186,6 +195,13 @@ export default function HomeworkSolverPage() {
 
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">{t("taskText") || "Vazifa matni"}</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => setSelectedImage(event.target.files?.[0] || null)}
+            />
             <textarea 
               className="input h-40 py-4 px-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 focus:ring-2 ring-amber-500/20 text-sm font-medium leading-relaxed resize-none w-full" 
               placeholder={t("taskPlaceholder") || "Vazifani kiriting..."} 
@@ -193,7 +209,22 @@ export default function HomeworkSolverPage() {
               onChange={e => setQuestion(e.target.value)}
               onKeyDown={e => e.key === "Enter" && e.ctrlKey && handleSolve()}
             />
-            <p className="text-[9px] text-slate-400 ml-1">Ctrl+Enter — yuborish</p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[9px] text-slate-400 ml-1">Ctrl+Enter - yuborish</p>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-500/10 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-300"
+              >
+                <FiImage /> Rasm yuklash
+              </button>
+            </div>
+            {selectedImage && (
+              <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <FiImage /> {selectedImage.name}
+                <button type="button" onClick={() => setSelectedImage(null)} className="text-rose-500"><FiX /></button>
+              </div>
+            )}
           </div>
 
           <button 
@@ -210,7 +241,7 @@ export default function HomeworkSolverPage() {
               <>
                 <FiZap className="group-hover:rotate-12 transition-transform" />
                 <span>{t("solveTask")}</span>
-                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-[8px]">5 {t("credits").toUpperCase()}</span>
+                <span className="ml-2 px-2 py-0.5 bg-white/20 rounded text-[8px]">{creditCost} {t("credits").toUpperCase()}</span>
               </>
             )}
           </button>

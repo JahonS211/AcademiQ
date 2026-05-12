@@ -8,8 +8,10 @@ import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
 import { FiEdit3, FiTrash2, FiZap } from "react-icons/fi";
 import { syncUserCredits } from "../../lib/syncUtils";
+import { essayCreditCost } from "../../lib/creditCosts";
 import CustomSelect from "../../components/CustomSelect";
 import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
+import BackButton from "../../components/BackButton";
 
 export default function EssayGeneratorPage() {
   const { t } = useI18n();
@@ -18,6 +20,7 @@ export default function EssayGeneratorPage() {
   const [essay, setEssay] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showCreditModal, setShowCreditModal] = useState(false);
+  const creditCost = essayCreditCost(form.length);
 
   const generateEssay = async () => {
     if (!form.topic.trim()) return toast.error(t("topicRequired"));
@@ -71,6 +74,7 @@ export default function EssayGeneratorPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-2 md:py-6 px-2 md:px-0">
+      <BackButton fallback="/tools" />
       <div className="card p-6 md:p-10 bg-white dark:bg-slate-900 border-none shadow-2xl relative overflow-visible z-20">
         <div className="absolute top-0 right-0 w-32 h-32 bg-brandA/5 rounded-full -mr-10 -mt-10 blur-3xl" />
         
@@ -101,9 +105,9 @@ export default function EssayGeneratorPage() {
               value={form.language}
               onChange={(val) => setForm({ ...form, language: val })}
               options={[
-                { value: "uz", label: "O'zbekcha 🇺🇿" },
-                { value: "ru", label: "Русский 🇷🇺" },
-                { value: "en", label: "English 🇺🇸" }
+                { value: "uz", label: "O'zbekcha" },
+                { value: "ru", label: "Ruscha" },
+                { value: "en", label: "English" }
               ]}
             />
             <CustomSelect 
@@ -134,7 +138,7 @@ export default function EssayGeneratorPage() {
                    <span>{t("generate")}</span>
                    <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
                 </div>
-                <span className="px-2.5 py-1 bg-brandA text-white rounded-lg text-[9px] font-black tracking-tighter uppercase shadow-lg shadow-brandA/20">10 {t("credits")}</span>
+                <span className="px-2.5 py-1 bg-brandA text-white rounded-lg text-[9px] font-black tracking-tighter uppercase shadow-lg shadow-brandA/20">{creditCost} {t("credits")}</span>
               </>
             )}
           </button>

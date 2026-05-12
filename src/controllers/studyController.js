@@ -2,11 +2,24 @@ const geminiService = require("../services/gemini.service");
 
 const solveHomeworkHandler = async (req, res, next) => {
   try {
-    const { question, subject } = req.body;
-    if (!question) return res.status(400).json({ success: false, message: "Question is required" });
+    const { question = "", subject } = req.body;
+    if (!question && !req.file) return res.status(400).json({ success: false, message: "Question or image is required" });
 
     const languageLabelMap = { uz: "Uzbek", ru: "Russian", en: "English" };
     const selectedLang = languageLabelMap[req.body.language] || "Uzbek";
+
+    let imageContext = "";
+    if (req.file) {
+      const visionPrompt = `Rasmdagi masala, matn, formula, jadval yoki diagrammani o'qi. Muhim ma'lumotlarni ${selectedLang} tilida aniq chiqar.`;
+      const visionResult = await geminiService.generateFromImage(visionPrompt, req.file.buffer, req.file.mimetype);
+      if (!visionResult || visionResult.error) {
+        return res.status(503).json({
+          success: false,
+          message: visionResult?.error || "Rasmni o'qib bo'lmadi. Iltimos, aniqroq rasm yuklang.",
+        });
+      }
+      imageContext = `\nRasmdan o'qilgan ma'lumot:\n${visionResult}\n`;
+    }
 
     const prompt = `Sen dunyo darajasidagi repetitorsan. Javoblarni faqat ${selectedLang} tilida ber.
 
@@ -16,8 +29,10 @@ QOIDALAR:
 3. Hisob-kitob bo'lsa, formulani va har bir muhim qadamni ko'rsat.
 4. Tanlangan fan: ${subject || "Umumiy"}. Savol boshqa fanga tegishli bo'lsa, qisqa eslat.
 5. Keraksiz kirish so'zlari yozma.
+6. Matematika bo'lsa, hisobni ikki marta tekshir. Kasr, ildiz va formulalarni \\frac{a}{b}, \\sqrt{x} shaklida yoz. Noto'g'ri taxmin qilma.
 
 Savol: ${question}
+${imageContext}
 
 Javob formati (${selectedLang}):
 ## Qisqa javob
@@ -30,7 +45,7 @@ Javob formati (${selectedLang}):
 [Kerak bo'lsa raqamlangan bosqichlar]`;
 
 
-    const solution = await geminiService.generateText(prompt, null, req.user.plan || "free");
+    const solution = await geminiService.generateText(prompt, null, req.user.planType || req.user.plan || "free");
 
     if (!solution || solution.error) {
       return res.status(503).json({ 
@@ -69,7 +84,7 @@ Return ONLY JSON with this structure:
   ]
 }`;
 
-    const data = await geminiService.generateJSON(prompt, null, req.user.plan || "free", { flashcards: [] });
+    const data = await geminiService.generateJSON(prompt, null, req.user.planType || req.user.plan || "free", { flashcards: [] });
 
     if (data.error) {
       return res.status(503).json({ success: false, message: data.error });

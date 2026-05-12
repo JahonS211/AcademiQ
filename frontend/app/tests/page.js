@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -7,9 +8,11 @@ import { motion } from "framer-motion";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
 import { syncUserCredits } from "../../lib/syncUtils";
+import { testCreditCost } from "../../lib/creditCosts";
 import { FiFileText, FiZap, FiAward, FiGlobe, FiTrash2 } from "react-icons/fi";
 import CustomSelect from "../../components/CustomSelect";
 import InsufficientCreditsModal from "../../components/InsufficientCreditsModal";
+import BackButton from "../../components/BackButton";
 
 export default function TestsPage() {
   const { t } = useI18n();
@@ -28,6 +31,8 @@ export default function TestsPage() {
     { value: "ru", label: "Русский" },
     { value: "en", label: "English" },
   ];
+
+  const creditCost = testCreditCost(questionCount);
 
   const countOptions = [
     { value: 5, label: "5 savol" },
@@ -52,7 +57,7 @@ export default function TestsPage() {
     setUserAnswers({});
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/tests/generate", 
+      const { data } = await axios.post(`${API_BASE_URL}/api/tests/generate`, 
         { topic, language, questionCount },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -95,6 +100,7 @@ export default function TestsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 py-4">
+      <BackButton fallback="/tools" />
       {!test ? (
         <div className="card p-10 text-center border-none bg-white dark:bg-slate-900 shadow-xl relative overflow-visible">
           <div className="absolute top-0 right-0 w-24 h-24 bg-brandA/5 rounded-full -mr-8 -mt-8 blur-2xl" />
@@ -135,7 +141,7 @@ export default function TestsPage() {
                 <>
                   <span>{t("generate")}</span>
                   <FiZap className="text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
-                  <span className="ml-2 px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter uppercase">5 {t("credits")}</span>
+                  <span className="ml-2 px-2.5 py-1 bg-indigo-500 text-white rounded-lg text-[9px] font-black tracking-tighter uppercase">{creditCost} {t("credits")}</span>
                 </>
               )}
             </button>

@@ -10,6 +10,13 @@ const PRICES = {
   credit_unit: 100, // 100 UZS per credit
 };
 
+const calculateCreditPrice = (credits) => {
+  if (credits >= 1000) return credits * 70;
+  if (credits >= 500) return credits * 80;
+  if (credits >= 300) return credits * 85;
+  return credits * PRICES.credit_unit;
+};
+
 const multer = require("multer");
 const path = require("path");
 
@@ -54,7 +61,7 @@ const createManualPayment = async (req, res, next) => {
     } else if (type === "credits") {
       creditAmount = Number(requestedAmount);
       if (!creditAmount || creditAmount <= 0) return res.status(400).json({ message: "Kredit miqdorini kiriting" });
-      originalAmount = creditAmount * PRICES.credit_unit;
+      originalAmount = calculateCreditPrice(creditAmount);
     } else {
       return res.status(400).json({ message: "Invalid payment type" });
     }

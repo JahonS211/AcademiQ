@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema(
     },
     credits: {
       type: Number,
-      default: 25, // Default for free plan
+      default: 50, // Daily free plan limit
     },
     isUnlimitedCredits: {
       type: Boolean,

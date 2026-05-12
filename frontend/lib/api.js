@@ -1,7 +1,8 @@
+import { API_BASE_URL } from "./config";
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "https://academiq-production-0920.up.railway.app",
+  baseURL: `${API_BASE_URL}`,
 });
 
 api.interceptors.request.use((config) => {

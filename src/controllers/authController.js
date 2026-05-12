@@ -215,9 +215,12 @@ const path = require("path");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, `profile-${Date.now()}-${file.originalname}`),
+  filename: (req, file, cb) => {
+    const safeName = String(file.originalname || "photo").replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
+    cb(null, `profile-${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
+  },
 });
-const upload = multer({ storage }).single("photo");
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }).single("photo");
 
 const getProfile = async (req, res, next) => {
   try {

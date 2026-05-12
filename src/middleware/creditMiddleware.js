@@ -1,15 +1,21 @@
-const User = require("../models/User");
+﻿const User = require("../models/User");
 const CreditHistory = require("../models/CreditHistory");
 
+const resolveCost = (cost, req) => {
+  const value = typeof cost === "function" ? cost(req) : cost;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric > 0 ? Math.ceil(numeric) : 0;
+};
+
 /**
- * Middleware to check and deduct credits with plan-based restrictions
- * @param {number} cost - Number of credits required
- * @param {string} toolName - Name of the tool for history tracking
- * @param {string[]} allowedPlans - List of plans allowed to use this tool (optional)
+ * Middleware to check and deduct credits with plan-based restrictions.
+ * Cost may be a number or a function that reads req.body.
  */
 const checkCredits = (cost, toolName, allowedPlans = ["free", "pro", "pro_plus"]) => {
   return async (req, res, next) => {
     try {
+      const actualCost = resolveCost(cost, req);
+
       if (req.user?.isVirtual) {
         const planType = req.user.planType || "pro_plus";
         if (!allowedPlans.includes(planType)) {
@@ -22,6 +28,7 @@ const checkCredits = (cost, toolName, allowedPlans = ["free", "pro", "pro_plus"]
           });
         }
 
+        req.creditCost = actualCost;
         req.deductCredits = async () => null;
         return next();
       }
@@ -29,43 +36,43 @@ const checkCredits = (cost, toolName, allowedPlans = ["free", "pro", "pro_plus"]
       const user = await User.findById(req.user.id || req.user._id);
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      // Check Plan restrictions
-      if (!allowedPlans.includes(user.planType)) {
+      const planType = user.planType || "free";
+      if (!allowedPlans.includes(planType)) {
         return res.status(403).json({
           success: false,
           code: "UPGRADE_REQUIRED",
           message: `${toolName} xizmati uchun rejangizni yangilang.`,
-          currentPlan: user.planType,
+          currentPlan: planType,
           allowedPlans
         });
       }
 
-      if (!user.isUnlimitedCredits && user.credits < cost) {
+      if (!user.isUnlimitedCredits && user.credits < actualCost) {
         return res.status(403).json({
           success: false,
           code: "INSUFFICIENT_CREDITS",
           message: "Kreditlar yetarli emas. Iltimos, balansingizni to'ldiring.",
-          required: cost,
+          required: actualCost,
           current: user.credits,
         });
       }
 
-      // Add a helper to the request object to deduct credits later
+      req.creditCost = actualCost;
       req.deductCredits = async (details = "") => {
-        if (!user.isUnlimitedCredits && cost > 0) {
-          user.credits -= cost;
-          user.totalCreditsUsed += cost;
+        if (!user.isUnlimitedCredits && actualCost > 0) {
+          user.credits -= actualCost;
+          user.totalCreditsUsed += actualCost;
           await user.save();
         }
 
         await CreditHistory.create({
           userId: user._id,
           toolName,
-          creditsUsed: (user.isUnlimitedCredits || cost === 0) ? 0 : cost,
+          creditsUsed: (user.isUnlimitedCredits || actualCost === 0) ? 0 : actualCost,
           details: user.isUnlimitedCredits ? `(Unlimited) ${details}` : details,
         });
 
-        return user.credits; // Return current balance
+        return user.credits;
       };
 
       next();

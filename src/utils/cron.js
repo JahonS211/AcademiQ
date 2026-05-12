@@ -2,7 +2,7 @@ const cron = require("node-cron");
 const User = require("../models/User");
 
 const PLAN_LIMITS = {
-  free: 25,
+  free: 50,
   pro: 150,
   pro_plus: 500,
 };

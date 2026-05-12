@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../lib/config";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
-import { promoApi, rewardsApi } from "../../lib/api";
-import { FiZap, FiCreditCard, FiArrowRight, FiCopy, FiCamera, FiRefreshCw, FiStar, FiChevronRight } from "react-icons/fi";
+import { FiZap, FiArrowRight, FiCopy, FiCamera, FiRefreshCw, FiStar } from "react-icons/fi";
 
+const API_BASE = `${API_BASE_URL}`;
 const CREDIT_PRICE = 100; // Base price
+const PENDING_PAYMENT_KEY = "academiq_pending_payment";
 
 const PACKAGES = [
   { credits: 300, price: 25000, label: "Boshlang'ich", popular: false, color: "from-blue-500 to-indigo-600" },
@@ -22,6 +24,7 @@ export default function BuyCreditsPage() {
   const { t } = useI18n();
   const router = useRouter();
   const ready = useRequireAuth();
+  const pollingRef = useRef(null);
 
   const [user, setUser] = useState(null);
   const [amount, setAmount] = useState(300);
@@ -43,12 +46,25 @@ export default function BuyCreditsPage() {
 
   const [history, setHistory] = useState([]);
 
+  const savePendingPayment = (payment, receiptUploaded = false) => {
+    if (!payment?.code) return;
+    localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify({
+      payment,
+      receiptUploaded,
+      savedAt: Date.now(),
+    }));
+  };
+
+  const clearPendingPayment = () => {
+    localStorage.removeItem(PENDING_PAYMENT_KEY);
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/auth/profile", {
+          const { data } = await axios.get(`${API_BASE}/api/auth/profile`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (data.success) setUser(data.user);
@@ -59,7 +75,7 @@ export default function BuyCreditsPage() {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          const { data } = await axios.get("https://academiq-production-0920.up.railway.app/api/payment/history", {
+          const { data } = await axios.get(`${API_BASE}/api/payment/history`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           setHistory(data.history || []);
@@ -68,6 +84,25 @@ export default function BuyCreditsPage() {
     };
     fetchUser();
     fetchHistory();
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    const raw = localStorage.getItem(PENDING_PAYMENT_KEY);
+    if (!raw) return;
+
+    try {
+      const saved = JSON.parse(raw);
+      if (!saved?.payment?.code) return;
+      setPaymentInfo(saved.payment);
+      setIsReceiptUploaded(Boolean(saved.receiptUploaded));
+      setIsPaid(false);
+      setSelectedFile(null);
+      setShowModal(true);
+      startPolling(saved.payment.code);
+    } catch (error) {
+      clearPendingPayment();
+    }
   }, [ready]);
 
   const calculatePrice = (qty) => {
@@ -81,11 +116,16 @@ export default function BuyCreditsPage() {
   };
 
   const currentPrice = calculatePrice(isCustom ? (parseInt(customAmount) || 0) : amount);
+  const promoDiscount = promoInfo ? Math.floor((currentPrice * Number(promoInfo.discountPercent || 0)) / 100) : 0;
+  const afterPromoPrice = Math.max(currentPrice - promoDiscount, 0);
+  const rewardsDiscount = useRewards ? Math.min(Number(user?.rewardBalance || 0), afterPromoPrice) : 0;
+  const payablePrice = Math.max(afterPromoPrice - rewardsDiscount, 0);
 
   const validatePromo = async () => {
     if (!promoCode.trim()) return;
     try {
-      const { data } = await promoApi.validate({ code: promoCode });
+      const token = localStorage.getItem("token");
+      const { data } = await axios.post(`${API_BASE}/api/promo/validate`, { code: promoCode }, { headers: { Authorization: `Bearer ${token}` } });
       if (data.promo.type === 'plan') {
          return toast.error("Ushbu promo faqat tariflar uchun amal qiladi");
       }
@@ -104,7 +144,7 @@ export default function BuyCreditsPage() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/payment/create", {
+      const { data } = await axios.post(`${API_BASE}/api/payment/create`, {
         type: "credits",
         amount: finalAmount,
         promoCode: promoInfo?.code || promoCode || "",
@@ -114,6 +154,7 @@ export default function BuyCreditsPage() {
       });
 
       setPaymentInfo(data.payment);
+      savePendingPayment(data.payment, false);
       setShowModal(true);
       setIsReceiptUploaded(false);
       setIsPaid(false);
@@ -127,27 +168,40 @@ export default function BuyCreditsPage() {
   };
 
   const startPolling = (code) => {
-    const interval = setInterval(async () => {
+    if (!code) return;
+    if (pollingRef.current) clearInterval(pollingRef.current);
+
+    const checkStatus = async () => {
       try {
         const token = localStorage.getItem("token");
-        const { data } = await axios.get(`https://academiq-production-0920.up.railway.app/api/payment/status/${code}`, {
+        const { data } = await axios.get(`${API_BASE}/api/payment/status/${code}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         if (data.status === "paid") {
           setIsPaid(true);
           toast.success("To'lov tasdiqlandi!");
-          clearInterval(interval);
+          clearPendingPayment();
+          if (pollingRef.current) clearInterval(pollingRef.current);
           setTimeout(() => {
             setShowModal(false);
             router.push("/chat");
           }, 3000);
+        } else if (data.status === "rejected") {
+          toast.error("To'lov rad etildi. Iltimos, supportga murojaat qiling.");
+          clearPendingPayment();
+          if (pollingRef.current) clearInterval(pollingRef.current);
         }
       } catch (err) {
         console.error("Polling error", err);
       }
-    }, 3000);
-    return () => clearInterval(interval);
+    };
+
+    checkStatus();
+    pollingRef.current = setInterval(checkStatus, 3000);
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
   };
 
   const handleUploadReceipt = async () => {
@@ -159,7 +213,7 @@ export default function BuyCreditsPage() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post("https://academiq-production-0920.up.railway.app/api/payment/upload-receipt", formData, {
+      await axios.post(`${API_BASE}/api/payment/upload-receipt`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -167,6 +221,7 @@ export default function BuyCreditsPage() {
       });
       toast.success("Chek yuklandi!");
       setIsReceiptUploaded(true);
+      savePendingPayment(paymentInfo, true);
     } catch (err) {
       toast.error("Yuklashda xatolik");
     } finally {
@@ -261,6 +316,51 @@ export default function BuyCreditsPage() {
           </div>
         </div>
 
+
+        <div className="card p-5 md:p-6 bg-white dark:bg-slate-900 border-none shadow-xl rounded-[2rem]">
+          <div className="flex flex-col lg:flex-row gap-4 lg:items-end">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Promo va bonus</label>
+                {promoInfo && (
+                  <span className="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                    -{promoInfo.discountPercent}% off
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="input flex-1 py-4 px-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-none font-black text-sm"
+                  placeholder="Promo kod"
+                  value={promoCode}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value);
+                    setPromoInfo(null);
+                  }}
+                />
+                <button
+                  onClick={validatePromo}
+                  className="px-6 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black text-[10px] uppercase tracking-widest hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 min-w-[220px]">
+              <div>
+                <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Rewards balance</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white">{user?.rewardBalance?.toLocaleString() || 0} UZS</p>
+              </div>
+              <button
+                onClick={() => setUseRewards((v) => !v)}
+                className={`w-14 h-8 rounded-full transition-all flex items-center px-1.5 ${useRewards ? "bg-brandA shadow-lg shadow-brandA/20" : "bg-slate-200 dark:bg-slate-700"}`}
+              >
+                <motion.div animate={{ x: useRewards ? 24 : 0 }} className="w-5 h-5 rounded-full bg-white shadow-md" />
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="card p-10 bg-slate-900 text-white border-none shadow-2xl relative overflow-hidden group rounded-[3rem]">
            <div className="absolute -right-20 -top-20 w-80 h-80 bg-brandA/20 rounded-full blur-[100px] group-hover:scale-125 transition-transform duration-1000" />
            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
@@ -271,8 +371,14 @@ export default function BuyCreditsPage() {
                  </div>
                  <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-tight">
                     {isCustom ? (parseInt(customAmount) || 0) : amount} Kredit = <br className="md:hidden" />
-                    <span className="text-brandA ml-2">{currentPrice.toLocaleString()} UZS</span>
+                    <span className="text-brandA ml-2">{payablePrice.toLocaleString()} UZS</span>
                  </h2>
+                 {payablePrice < currentPrice && (
+                   <p className="text-slate-400 text-[11px] font-black uppercase tracking-widest">
+                     <span className="line-through opacity-50 mr-2">{currentPrice.toLocaleString()} UZS</span>
+                     <span className="text-emerald-400">-{(promoDiscount + rewardsDiscount).toLocaleString()} UZS chegirma</span>
+                   </p>
+                 )}
                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest opacity-60">To'lovdan so'ng kreditlar darhol qo'shiladi.</p>
               </div>
               <button
@@ -289,7 +395,7 @@ export default function BuyCreditsPage() {
       {/* Payment Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[3rem] p-8 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 animate-in zoom-in-95 duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[2rem] p-6 md:p-8 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 animate-in zoom-in-95 duration-300">
             {isPaid ? (
               <div className="flex flex-col items-center text-center py-8 animate-in slide-in-from-bottom-10 duration-700">
                 <div className="w-20 h-20 bg-green-500 text-white rounded-[2rem] flex items-center justify-center text-4xl shadow-[0_20px_40px_-10px_rgba(34,197,94,0.5)] mb-6 animate-bounce">✓</div>
@@ -307,7 +413,7 @@ export default function BuyCreditsPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="hidden">
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <div className="flex justify-between items-center mb-2">
                          <p className="text-[8px] text-slate-400 font-black uppercase tracking-[0.2em]">Promo code</p>
@@ -345,7 +451,13 @@ export default function BuyCreditsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                       <p className="text-[8px] text-slate-400 font-black uppercase mb-1 tracking-[0.2em]">To'lov</p>
+                      {paymentInfo?.originalAmount > paymentInfo?.amount && (
+                        <p className="text-[10px] font-black text-slate-400 line-through mb-0.5">{paymentInfo.originalAmount.toLocaleString()} UZS</p>
+                      )}
                       <p className="text-sm font-black text-slate-900 dark:text-white">{paymentInfo?.amount?.toLocaleString()} UZS</p>
+                      {paymentInfo?.promoDiscountPercent > 0 && (
+                        <p className="text-[9px] font-black text-emerald-500 mt-1">-{paymentInfo.promoDiscountPercent}% promo</p>
+                      )}
                     </div>
                     <div className="p-4 bg-brandA/5 rounded-2xl border-2 border-dashed border-brandA/30 relative">
                       <p className="text-[8px] text-brandA font-black uppercase mb-1 tracking-[0.2em]">Izoh kodi</p>

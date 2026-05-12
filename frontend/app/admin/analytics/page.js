@@ -1,10 +1,10 @@
 "use client";
 
+import { API_BASE_URL } from "../../../lib/config";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   LineChart,
@@ -20,7 +20,7 @@ import {
   FiHome, FiUsers, FiCreditCard, FiZap, FiGift, FiRotateCcw, FiClock, FiDollarSign, FiSearch, FiExternalLink, FiBarChart2, FiCheckCircle
 } from "react-icons/fi";
 
-const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "academiq-production-0920.up.railway.app";
+const baseURL = `${API_BASE_URL}`;
 
 function Card({ title, value, sub, icon }) {
   return (
@@ -126,6 +126,7 @@ export default function AdminAnalyticsPage() {
         
         <div className="flex items-center gap-3">
           <button 
+            aria-label="Analitikani yangilash"
             onClick={fetchData}
             className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-slate-500 hover:text-brandA transition-colors shadow-lg"
           >
@@ -133,8 +134,9 @@ export default function AdminAnalyticsPage() {
           </button>
           
           <button 
+            aria-label="Analitikani tozalash"
             onClick={handleReset}
-            className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-105 active:scale-95 transition-all"
+            className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-95 transition-transform duration-150"
           >
             <FiRotateCcw className="w-4 h-4" />
             Tozalash
@@ -155,7 +157,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
+        <div className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">User growth (30d)</h3>
           </div>
@@ -172,9 +174,9 @@ export default function AdminAnalyticsPage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
+        <div className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
           <div className="flex items-center justify-between mb-8">
             <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Revenue growth (30d)</h3>
           </div>
@@ -191,11 +193,11 @@ export default function AdminAnalyticsPage() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Detailed History Table */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
+      <div className="card p-8 bg-white dark:bg-slate-900 border-none shadow-xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-10">
           <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">Detailed Transaction History</h3>
           <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl gap-1">
@@ -203,7 +205,7 @@ export default function AdminAnalyticsPage() {
                <button 
                  key={tab}
                  onClick={() => setActiveTab(tab)}
-                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                 className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors duration-150 ${
                    activeTab === tab 
                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-lg" 
                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
@@ -305,7 +307,7 @@ export default function AdminAnalyticsPage() {
             </div>
           )}
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

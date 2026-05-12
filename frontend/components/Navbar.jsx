@@ -23,7 +23,7 @@ export default function Navbar() {
   if (!mounted) return null; // Avoid hydration mismatch
   
   // Faqat ochiq sahifalarda Navbar ni ko'rsatish
-  const publicPaths = ["/", "/login", "/register", "/pricing", "/donat"];
+  const publicPaths = ["/", "/pricing", "/donat"];
   if (!publicPaths.includes(pathname)) return null;
 
   if (token) return null;
@@ -42,7 +42,7 @@ export default function Navbar() {
               className="relative w-8 h-8 rounded-full object-contain bg-white shadow-sm" 
             />
           </div>
-          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("home") || "AcademiQ"}</span>
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">AcademiQ</span>
         </Link>
         
         {/* Center: Links */}

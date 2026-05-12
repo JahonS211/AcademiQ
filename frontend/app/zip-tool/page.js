@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
@@ -8,7 +9,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useI18n } from "../../lib/i18n";
 import useRequireAuth from "../../lib/useRequireAuth";
 import { syncUserCredits } from "../../lib/syncUtils";
+import { toolBaseCosts } from "../../lib/creditCosts";
 import { FiFolder, FiFile, FiX, FiZap, FiDownload, FiArchive, FiTrash2 } from "react-icons/fi";
+import BackButton from "../../components/BackButton";
 
 export default function ZipToolPage() {
   const { t } = useI18n();
@@ -45,7 +48,7 @@ export default function ZipToolPage() {
       const formData = new FormData();
       files.forEach(f => formData.append("files", f));
 
-      const { data } = await axios.post("https://academiq-production-0920.up.railway.app/api/compress", formData, {
+      const { data } = await axios.post(`${API_BASE_URL}/api/compress`, formData, {
         headers: { 
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
@@ -68,6 +71,7 @@ export default function ZipToolPage() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
+      <BackButton fallback="/tools" />
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20 mb-2">
           <FiArchive className="w-4 h-4" />
@@ -130,7 +134,7 @@ export default function ZipToolPage() {
                 <button
                   onClick={handleZip}
                   disabled={loading}
-                  className="w-full py-5 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-black uppercase tracking-[0.2em] shadow-2xl transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                  className="w-full py-5 rounded-3xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[12px] font-black uppercase tracking-[0.2em] shadow-2xl transition-transform duration-150 hover:scale-[1.01] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                 >
                   {loading ? "Arxivlanmoqda..." : (
                     <>
@@ -140,13 +144,13 @@ export default function ZipToolPage() {
                 </button>
                 <button
                   onClick={handleClear}
-                  className="w-full py-4 rounded-3xl bg-rose-500/10 text-rose-500 text-[11px] font-black uppercase tracking-[0.2em] transition-all hover:bg-rose-500 hover:text-white flex items-center justify-center gap-3"
+                  className="w-full py-4 rounded-3xl bg-rose-500/10 text-rose-500 text-[11px] font-black uppercase tracking-[0.2em] transition-colors duration-150 hover:bg-rose-500 hover:text-white flex items-center justify-center gap-3"
                 >
                   <FiTrash2 />
                   Tozalash
                 </button>
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                   <FiZap /> 1 Credit required
+                   <FiZap /> Min. {toolBaseCosts.zip} kredit
                 </div>
               </div>
             </motion.div>
@@ -168,9 +172,9 @@ export default function ZipToolPage() {
             </div>
             <div className="mt-2 flex flex-col sm:flex-row gap-3">
               <a 
-                href={`https://academiq-production-0920.up.railway.app/${resultUrl}`}
+                href={`${API_BASE_URL}${resultUrl}`}
                 download
-                className="px-10 py-4 bg-white text-emerald-600 rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
+                className="px-10 py-4 bg-white text-emerald-600 rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.01] transition-transform duration-150"
               >
                 Yuklab Olish
               </a>

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_BASE_URL } from "../../lib/config";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useI18n } from "../../lib/i18n";
@@ -20,7 +21,7 @@ export default function NotificationsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("https://academiq-production-0920.up.railway.app/api/notifications", {
+        const res = await axios.get(`${API_BASE_URL}/api/notifications`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setData(res.data.notifications || []);

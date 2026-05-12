@@ -7,7 +7,7 @@ const startCronJobs = () => {
   cron.schedule("0 0 * * *", async () => {
     console.log("Running daily credit reset...");
     try {
-      const PLAN_LIMITS = { free: 25, pro: 150, pro_plus: 500 };
+      const PLAN_LIMITS = { free: 50, pro: 150, pro_plus: 500 };
       const users = await User.find({});
       
       for (const user of users) {
