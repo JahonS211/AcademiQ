@@ -1,4 +1,4 @@
-const DEFAULT_API_BASE_URL = "https://academiq-production-6d86.up.railway.app";
+const DEFAULT_API_BASE_URL = "https://academiq-production-0920.up.railway.app";
 
 export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/+$/, "");
 
