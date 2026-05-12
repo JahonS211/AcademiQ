@@ -15,7 +15,7 @@ const getMyReferralStats = async (req, res, next) => {
 
     return res.status(200).json({
       referralCode: user.referralCode,
-      referralLink: `${process.env.PUBLIC_WEB_URL || "https://academiq.uz"}/register?ref=${user.referralCode}`,
+      referralLink: `${process.env.PUBLIC_WEB_URL || "https://thinky.uz"}/register?ref=${user.referralCode}`,
       totalReferrals: total,
       paidReferrals: paid,
       referralEarnings: user.referralEarnings || 0,

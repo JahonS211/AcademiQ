@@ -98,7 +98,7 @@ export default function DesmosPanel({ expressions = [], className = "", calculat
     calculatorRef.current.setBlank();
     const list = expressions.length ? expressions : ["y=x^2", "y=\\sqrt{x+4}", "y=\\frac{1}{2}x+1"];
     list.slice(0, 8).forEach((latex, index) => {
-      calculatorRef.current.setExpression({ id: `academiq-${index}`, latex: String(latex) });
+      calculatorRef.current.setExpression({ id: `thinky-${index}`, latex: String(latex) });
     });
   }, [expressions, ready, calculatorType]);
 

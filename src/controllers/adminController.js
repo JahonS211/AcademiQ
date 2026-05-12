@@ -51,7 +51,7 @@ const createAdminCreditHistory = (user, toolName, creditsUsed, details) =>
 
 const getAdminAssistantHelp = () =>
   [
-    "AcademiQ admin assistant tayyor. Buyruqni email yoki user ID bilan yozing.",
+    "Thinky admin assistant tayyor. Buyruqni email yoki user ID bilan yozing.",
     "",
     "Misollar:",
     "- `user@mail.com ga 50 credit qo'sh`",

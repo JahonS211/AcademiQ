@@ -12,7 +12,7 @@ import { FiZap, FiArrowRight, FiCopy, FiCamera, FiRefreshCw, FiStar } from "reac
 
 const API_BASE = `${API_BASE_URL}`;
 const CREDIT_PRICE = 100; // Base price
-const PENDING_PAYMENT_KEY = "academiq_pending_payment";
+const PENDING_PAYMENT_KEY = "thinky_pending_payment";
 
 const PACKAGES = [
   { credits: 300, price: 25000, label: "Boshlang'ich", popular: false, color: "from-blue-500 to-indigo-600" },

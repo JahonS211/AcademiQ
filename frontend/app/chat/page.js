@@ -143,7 +143,7 @@ export default function ChatPage() {
   }, [ready]);
 
   useEffect(() => {
-    const savedHistory = sessionStorage.getItem("academiq_chat_sessions");
+    const savedHistory = sessionStorage.getItem("thinky_chat_sessions");
     if (!savedHistory) return;
 
     try {
@@ -154,7 +154,7 @@ export default function ChatPage() {
         setActiveSessionId(parsed[0].id);
       }
     } catch (_) {
-      sessionStorage.removeItem("academiq_chat_sessions");
+      sessionStorage.removeItem("thinky_chat_sessions");
     }
   }, []);
 
@@ -173,7 +173,7 @@ export default function ChatPage() {
     }
 
     setHistory(nextHistory);
-    sessionStorage.setItem("academiq_chat_sessions", JSON.stringify(nextHistory));
+    sessionStorage.setItem("thinky_chat_sessions", JSON.stringify(nextHistory));
   }, [messages, activeSessionId]);
 
   useEffect(() => {
@@ -338,7 +338,7 @@ export default function ChatPage() {
               <FiMessageSquare className="w-5 h-5" />
             </button>
             <div className="hidden sm:block min-w-0">
-              <h1 className="text-sm md:text-lg font-black tracking-tight uppercase truncate max-w-[180px] md:max-w-none">AcademiQ AI Assistant</h1>
+              <h1 className="text-sm md:text-lg font-black tracking-tight uppercase truncate max-w-[180px] md:max-w-none">Thinky AI Assistant</h1>
               <p className="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase tracking-widest">Active - AI models on</p>
             </div>
           </div>

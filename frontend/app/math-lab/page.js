@@ -126,7 +126,7 @@ const topicGroupsByLang = {
 
 const copyMap = {
   uz: {
-    title: "AcademiQ Math Lab",
+    title: "Thinky Math Lab",
     desc: "WolframAlpha uslubida formulalar, yechim va grafik.",
     enter: "Masala yoki ifodani kiriting",
     ready: "Yechim tayyor",
@@ -144,7 +144,7 @@ const copyMap = {
     credit: "kredit",
   },
   ru: {
-    title: "AcademiQ Math Lab",
+    title: "Thinky Math Lab",
     desc: "Формулы, решения и графики в стиле WolframAlpha.",
     enter: "Введите задачу или выражение",
     ready: "Решение готово",
@@ -162,7 +162,7 @@ const copyMap = {
     credit: "кредит",
   },
   en: {
-    title: "AcademiQ Math Lab",
+    title: "Thinky Math Lab",
     desc: "WolframAlpha-style formulas, solutions, and graphs.",
     enter: "Enter a problem or expression",
     ready: "Solution is ready",

@@ -30,7 +30,7 @@ const tools = [
 const steps = [
   "Mavzuni yoki matnni kiriting",
   "Til, uzunlik, slayd yoki savollar sonini tanlang",
-  "AcademiQ natijani toza formatda tayyorlaydi",
+  "Thinky natijani toza formatda tayyorlaydi",
   "Natijani nusxalang, yuklab oling yoki davom ettiring",
 ];
 
@@ -59,7 +59,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <motion.div variants={fadeUp} className="mb-6 inline-flex items-center gap-3 rounded-full border border-indigo-500/20 bg-white/70 px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-indigo-600 shadow-sm backdrop-blur dark:bg-slate-900/60 dark:text-indigo-300">
               <FiZap className="h-4 w-4" />
-              AcademiQ AI Education Platform
+              Thinky AI Education Platform
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-slate-950 dark:text-white md:text-7xl lg:text-8xl">
@@ -67,7 +67,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p variants={fadeUp} className="mt-7 max-w-2xl text-base font-semibold leading-relaxed text-slate-600 dark:text-slate-300 md:text-lg">
-              AcademiQ insho yozish, tarjima qilish, test tuzish, prezentatsiya tayyorlash va fayl ishlari uchun yagona AI platforma. Free tarifda insho va tarjimon, Pro tariflarda esa to'liq o'quv asboblari ishlaydi.
+              Thinky insho yozish, tarjima qilish, test tuzish, prezentatsiya tayyorlash va fayl ishlari uchun yagona AI platforma. Free tarifda insho va tarjimon, Pro tariflarda esa to'liq o'quv asboblari ishlaydi.
             </motion.p>
 
             <motion.div variants={fadeUp} className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -89,9 +89,9 @@ export default function HomePage() {
             <div className="rounded-[1.5rem] bg-[#07111f] p-5 text-white">
               <div className="mb-5 flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-3">
-                  <img src="/logo.png" alt="AcademiQ" className="h-10 w-10 rounded-full bg-white object-contain" />
+                  <img src="/logo-v2.png" alt="Thinky" className="h-10 w-10 rounded-full bg-white object-contain" />
                   <div>
-                    <p className="text-sm font-black uppercase tracking-wide">AcademiQ Dashboard</p>
+                    <p className="text-sm font-black uppercase tracking-wide">Thinky Dashboard</p>
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">AI models ready</p>
                   </div>
                 </div>
@@ -158,7 +158,7 @@ export default function HomePage() {
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.55 }}>
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-500">Qanday ishlaydi</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">Oddiy, tez va tartibli jarayon</h2>
-            <p className="mt-4 text-sm font-semibold leading-relaxed text-slate-500 dark:text-slate-400 md:text-base">AcademiQ foydalanuvchini ortiqcha sozlamalar bilan charchatmaydi. Siz mavzu yoki matnni berasiz, platforma esa natijani o'qishga qulay formatda chiqaradi.</p>
+            <p className="mt-4 text-sm font-semibold leading-relaxed text-slate-500 dark:text-slate-400 md:text-base">Thinky foydalanuvchini ortiqcha sozlamalar bilan charchatmaydi. Siz mavzu yoki matnni berasiz, platforma esa natijani o'qishga qulay formatda chiqaradi.</p>
           </motion.div>
 
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger} className="grid gap-4 sm:grid-cols-2">
@@ -175,7 +175,7 @@ export default function HomePage() {
       <section className="border-t border-slate-200 bg-slate-950 py-16 text-white dark:border-slate-800">
         <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-300">AcademiQ</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-indigo-300">Thinky</p>
             <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight md:text-5xl">Bugun insho va tarjimadan boshlang, kerak bo'lsa Pro bilan kengaytiring.</h2>
           </div>
           <Link href="/register" className="inline-flex min-h-[58px] shrink-0 items-center justify-center gap-3 rounded-2xl bg-white px-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-950 shadow-xl transition-transform hover:scale-[1.02] active:scale-95">

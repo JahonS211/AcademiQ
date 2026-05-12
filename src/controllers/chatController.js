@@ -72,7 +72,7 @@ Return ONLY JSON:
       const concept = await geminiService.generateJSON(conceptPrompt, null, userPlan, {
         title: message.slice(0, 70),
         description: message,
-        keywords: ["education", "AcademiQ", "AI"],
+        keywords: ["education", "Thinky", "AI"],
       });
       if (concept.error) {
         return res.status(503).json({ success: false, message: concept.error });
@@ -102,7 +102,7 @@ Return ONLY JSON:
     let imageAnalysis = "";
     if (req.file) {
       const imagePrompt = `
-You are a vision assistant for AcademiQ.
+You are a vision assistant for Thinky.
 Read and understand the uploaded image. If it contains text, math, a task, a table, or a diagram, extract the important content and explain what is visible.
 Return a compact but complete analysis in ${selectedLang}.`.trim();
       const visionResult = await geminiService.generateFromImage(imagePrompt, req.file.buffer, req.file.mimetype);
@@ -116,14 +116,14 @@ Return a compact but complete analysis in ${selectedLang}.`.trim();
     }
 
     const siteKnowledge = `
-AcademiQ platformasi haqida to'liq ma'lumot:
-- AcademiQ - talabalar va o'quvchilar uchun AI bilan ishlaydigan ta'lim platformasi.
-- Platforma yaratuvchisi: ${creatorName}. Agar foydalanuvchi "seni kim yaratgan?", "botni kim qilgan?", "AcademiQni kim yaratgan?" deb so'rasa, aniq javob: "Meni/AcademiQ AI assistantni Sadriddinov Jahongir yaratgan." deb ayt.
-- Chat assistant nomi: AcademiQ AI Assistant. U foydalanuvchiga o'qish, yozish, tarjima, test, prezentatsiya va fayl ishlari bo'yicha yordam beradi.
+Thinky platformasi haqida to'liq ma'lumot:
+- Thinky - talabalar va o'quvchilar uchun AI bilan ishlaydigan ta'lim platformasi.
+- Platforma yaratuvchisi: ${creatorName}. Agar foydalanuvchi "seni kim yaratgan?", "botni kim qilgan?", "Thinkyni kim yaratgan?" deb so'rasa, aniq javob: "Meni/Thinky AI assistantni Sadriddinov Jahongir yaratgan." deb ayt.
+- Chat assistant nomi: Thinky AI Assistant. U foydalanuvchiga o'qish, yozish, tarjima, test, prezentatsiya va fayl ishlari bo'yicha yordam beradi.
 - Foydalanuvchi akkaunti: ism/name = ${userName}, email = ${userEmail}, tarif = ${planLabel}, mavjud kredit = ${credits}. Agar foydalanuvchi "ismim nima?", "men kimman?", "akkauntim qaysi?" deb so'rasa, shu akkaunt ma'lumotiga tayan.
 
 Asosiy sahifalar va vazifalar:
-- /chat: AcademiQ AI Assistant bilan suhbat. Savollarga javob, yo'naltirish, tushuntirish, kod va o'quv yordami.
+- /chat: Thinky AI Assistant bilan suhbat. Savollarga javob, yo'naltirish, tushuntirish, kod va o'quv yordami.
 - /essay-generator: insho/essay yaratadi. Til va uzunlikka qarab matn tayyorlaydi.
 - /homework-solver: uyga vazifa va masalalarni bosqichma-bosqich yechadi.
 - /presentations: mavzuga mos slaydlar yaratadi, slayd soni va ma'lumot uzunligini tanlash mumkin. Prezentatsiya aniq ma'lumot, dizayn va mavzuga mos rasm bilan tayyorlanadi.
@@ -154,7 +154,7 @@ Yo'naltirish qoidasi:
 `.trim();
 
     const prompt = `
-Sen AcademiQ AI Assistant'san. Talabalar uchun aniq, foydali va ishonchli yordamchi bo'lib javob ber.
+Sen Thinky AI Assistant'san. Talabalar uchun aniq, foydali va ishonchli yordamchi bo'lib javob ber.
 Javob tili: ${selectedLang}. Barcha javobni faqat shu tilda yoz.
 
 ${siteKnowledge}
@@ -177,7 +177,7 @@ MUHIM QOIDALAR:
 ${imageAnalysis}
 
 Suhbat tarixi:
-${history.map(h => `${h.role === "user" ? "User" : "AcademiQ"}: ${h.text}`).join("\n")}
+${history.map(h => `${h.role === "user" ? "User" : "Thinky"}: ${h.text}`).join("\n")}
 
 Foydalanuvchi savoli:
 ${message}

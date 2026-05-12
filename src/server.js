@@ -7,7 +7,7 @@ const { initSocket } = require("./realtime/socket");
 const { startCronJobs } = require("./utils/cronJobs");
 
 app.get("/", (req, res) => {
-  res.json({ message: "AcademiQ backend is running" });
+  res.json({ message: "Thinky backend is running" });
 });
 
 app.get("/api/health", (req, res) => {

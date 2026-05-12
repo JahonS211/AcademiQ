@@ -175,8 +175,8 @@ export default function Sidebar() {
             onClick={!isOpen ? toggleSidebar : undefined}
           >
             <img 
-              src="/logo.png" 
-              alt="AcademiQ" 
+              src="/logo-v2.png" 
+              alt="Thinky" 
               className={`w-8 h-8 rounded-full object-contain transition-opacity duration-200 ${!isOpen ? "group-hover/logo:opacity-0" : ""}`} 
             />
             {!isOpen && (
@@ -188,7 +188,7 @@ export default function Sidebar() {
           
           {isOpen && (
             <span className="text-lg font-bold text-slate-800 dark:text-white whitespace-nowrap">
-              AcademiQ
+              Thinky
             </span>
           )}
         </div>

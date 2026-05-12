@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import api from "../lib/api";
 import { getSocket } from "../lib/socket";
@@ -11,6 +11,8 @@ export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
+  const [isBottom, setIsBottom] = useState(false);
+  const triggerRef = useRef(null);
 
   const fetchUnread = async () => {
     try {
@@ -47,6 +49,13 @@ export default function NotificationsDropdown() {
     };
   }, []);
 
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setIsBottom(rect.top > window.innerHeight / 2);
+    }
+  }, [open]);
+
   const markRead = async (id) => {
     try {
       await api.post(`/api/notifications/${id}/read`);
@@ -60,7 +69,6 @@ export default function NotificationsDropdown() {
     try {
       await api.delete(`/api/notifications/${id}`);
       setItems((prev) => prev.filter(x => x._id !== id));
-      // Refresh unread count
       fetchUnread();
     } catch (e) {
       toast.error("O'chirishda xatolik");
@@ -93,14 +101,14 @@ export default function NotificationsDropdown() {
   const requestBrowser = async () => {
     try {
       const perm = await Notification.requestPermission();
-      if (perm === "granted") toast.success("Browser notifications enabled");
+      if (perm === "granted") toast.success("Brauzer bildirishnomalari yoqildi");
     } catch (_) {}
   };
 
   const hasUnread = useMemo(() => unread > 0, [unread]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={triggerRef}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="relative w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 flex items-center justify-center group transition-all hover:border-brandA/30"
@@ -117,11 +125,11 @@ export default function NotificationsDropdown() {
       <AnimatePresence>
         {open && (
           <motion.div 
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            initial={{ opacity: 0, y: isBottom ? -10 : 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            exit={{ opacity: 0, y: isBottom ? -10 : 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full right-0 mt-4 w-[min(380px,calc(100vw-2rem))] rounded-[24px] overflow-hidden z-[9999] shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            className={`absolute right-0 ${isBottom ? "bottom-full mb-4" : "top-full mt-4"} w-[min(380px,calc(100vw-2rem))] rounded-[24px] overflow-hidden z-[9999] shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900`}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
               <div className="flex items-center gap-2">
@@ -210,4 +218,3 @@ export default function NotificationsDropdown() {
     </div>
   );
 }
-

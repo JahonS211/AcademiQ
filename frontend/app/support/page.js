@@ -196,7 +196,7 @@ export default function SupportPage() {
 
           {/* Telegram Card */}
           <motion.a
-            href="https://t.me/academiq_help"
+            href="https://t.me/thinky_help"
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, x: 20 }}
@@ -213,7 +213,7 @@ export default function SupportPage() {
                 Telegram Support
               </p>
               <h3 className="text-xl font-black text-blue-700 dark:text-blue-300">
-                @academiq_help
+                @thinky_help
               </h3>
               <p className="text-xs text-blue-500/70 font-bold mt-1">
                 Tez javob • 24/7 online

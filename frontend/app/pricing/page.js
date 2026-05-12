@@ -1,7 +1,7 @@
 "use client";
 
 import { API_BASE_URL } from "../../lib/config";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -118,9 +118,13 @@ export default function PricingPage() {
     }
   };
 
+  const pollingRef = useRef(null);
+
   const startPolling = (code) => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
     setCheckingStatus(true);
-    const interval = setInterval(async () => {
+    
+    pollingRef.current = setInterval(async () => {
       try {
         const token = localStorage.getItem("token");
         const { data } = await axios.get(`${API_BASE_URL}/api/payment/status/${code}`, {
@@ -130,7 +134,10 @@ export default function PricingPage() {
         if (data.status === "paid") {
           setIsPaid(true);
           toast.success("To'lov tasdiqlandi!");
-          clearInterval(interval);
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
           
           localStorage.removeItem("activePayment");
           
@@ -144,7 +151,10 @@ export default function PricingPage() {
           }, 3000);
         } else if (data.status === "rejected") {
           toast.error("To'lov bekor qilindi.");
-          clearInterval(interval);
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
           localStorage.removeItem("activePayment");
           setShowModal(false);
         }
@@ -152,9 +162,13 @@ export default function PricingPage() {
         console.error("Polling error", err);
       }
     }, 3000);
-
-    return () => clearInterval(interval);
   };
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   const handleSupport = async () => {
     if (!supportMsg) return;
@@ -218,7 +232,7 @@ export default function PricingPage() {
     {
       name: "Free",
       price: "0",
-      description: "AcademiQ imkoniyatlarini sinab ko'ring",
+      description: "Thinky imkoniyatlarini sinab ko'ring",
       features: ["25 ta AI Kredit", "Barcha asboblar", "Asosiy AI modellari"],
       buttonText: "Boshlash",
       planId: "free",
@@ -252,7 +266,7 @@ export default function PricingPage() {
           Tarifingizni yangilang
         </h1>
         <p className="text-slate-500 max-w-2xl mx-auto font-medium">
-          AcademiQ bilan o'qishda yangi marralarni zabt eting.
+          Thinky bilan o'qishda yangi marralarni zabt eting.
         </p>
 
         {/* Refill Credits CTA */}
@@ -386,7 +400,7 @@ export default function PricingPage() {
               Murojaat yuborish
             </button>
             <a 
-              href="https://t.me/academiq_help" 
+              href="https://t.me/thinky_help" 
               target="_blank"
               className="px-10 py-5 bg-brandA text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-transform flex items-center gap-3"
             >

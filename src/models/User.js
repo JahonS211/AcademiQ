@@ -120,6 +120,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    stats: {
+      essays: { type: Number, default: 0 },
+      presentations: { type: Number, default: 0 },
+      tools: { type: Number, default: 0 },
+    },
   },
   { timestamps: { createdAt: true, updatedAt: true } }
 );

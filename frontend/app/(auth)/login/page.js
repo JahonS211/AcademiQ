@@ -64,11 +64,11 @@ export default function LoginPage() {
       <div className="rounded-[34px] border border-white/80 bg-white/90 p-6 shadow-2xl shadow-indigo-200/50 backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.07] dark:shadow-black/30 sm:p-8">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 ring-slate-200 dark:bg-white/90">
-            <Image src="/logo.png" alt="AcademiQ" width={44} height={44} className="rounded-xl" />
+            <Image src="/logo-v2.png" alt="Thinky" width={44} height={44} className="rounded-xl" />
           </div>
           <p className="text-xs font-black uppercase tracking-[0.28em] text-indigo-500 dark:text-indigo-300">Akkaunt</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 dark:text-white">Kirish</h1>
-          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-300">AcademiQ panelingizga qayting va ishni davom ettiring.</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-slate-500 dark:text-slate-300">Thinky panelingizga qayting va ishni davom ettiring.</p>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4">

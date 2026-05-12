@@ -46,7 +46,7 @@ bot.start((ctx) => {
       ]).resize()
     );
   } else {
-    ctx.reply(`Salom! AcademiQ botiga xush kelibsiz.\nSizning Telegram ID: ${ctx.from.id}\n\nAgar siz admin bo'lsangiz, ushbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozib qo'ying.`);
+    ctx.reply(`Salom! Thinky botiga xush kelibsiz.\nSizning Telegram ID: ${ctx.from.id}\n\nAgar siz admin bo'lsangiz, ushbu ID ni .env faylidagi TELEGRAM_ADMIN_ID qismiga yozib qo'ying.`);
   }
 });
 
@@ -57,16 +57,24 @@ bot.command("id", (ctx) => {
 const sendPaymentRequestToAdmin = async (payment, userEmail) => {
   if (!isBotReady || ADMIN_IDS.length === 0) return;
 
-  const rewardsText = payment.rewardsApplied > 0 ? `\n🎁 Ishlatilgan mukofot: ${payment.rewardsApplied} UZS` : "";
-  const promoText = payment.promoCode ? `\n🎟 Promo: ${payment.promoCode} (-${payment.promoDiscountPercent}%)` : "";
+    const originalAmount = (payment.originalAmount || 0).toLocaleString();
+    const finalAmount = (payment.amount || 0).toLocaleString();
+    const rewards = (payment.rewardsApplied || 0).toLocaleString();
+    const promo = payment.promoCode || "Yo'q";
+    const discount = payment.promoDiscountPercent || 0;
 
     const message = `
-🔔 <b>Yangi To'lov So'rovi!</b>
-  
-👤 User: ${userEmail}
-💰 To'lanadi: ${payment.amount} UZS (Asl narxi: ${payment.originalAmount} UZS)${promoText}${rewardsText}
-📦 Turi: ${payment.type === 'plan' ? `Tarif (${payment.plan})` : `Kreditlar (${payment.creditAmount} ta)`}
-🔑 Kod: <code>${payment.code}</code>
+🔔 <b>YANGI TO'LOV SO'ROVI!</b>
+
+👤 <b>Foydalanuvchi:</b> ${userEmail}
+💰 <b>To'lanadi:</b> <code>${finalAmount} UZS</code>
+💸 <b>Asl narxi:</b> <code>${originalAmount} UZS</code>
+
+🎟 <b>Promo-kod:</b> <code>${promo}</code> (-${discount}%)
+🎁 <b>Ishlatilgan mukofot:</b> <code>${rewards} UZS</code>
+
+📦 <b>Turi:</b> ${payment.type === 'plan' ? `Tarif (${payment.plan.toUpperCase()})` : `Kreditlar (${payment.creditAmount} ta)`}
+🔑 <b>To'lov kodi:</b> <code>${payment.code}</code>
   `;
 
   try {

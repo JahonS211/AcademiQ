@@ -91,7 +91,7 @@ const buildDiagram = ({ variant, palette, seed }) => {
 };
 
 const createGeneratedSvgVisual = ({
-  title = "AcademiQ visual",
+  title = "Thinky visual",
   description = "",
   keywords = [],
   palette = {},
@@ -173,7 +173,7 @@ const writeGeneratedSvgImage = ({ prompt, title, description, keywords = [], pal
     filePath,
     fileUrl: `/uploads/${fileName}`,
     data: svgToDataUri(svg),
-    source: "AcademiQ AI generated",
+    source: "Thinky AI generated",
   };
 };
 

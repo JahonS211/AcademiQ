@@ -13,7 +13,7 @@ const variants = {
 export default function CreditCard({
   type = "salmon-strip-vertical",
   number = "8600 1234 5678 9012",
-  holder = "AcademiQ Support",
+  holder = "Thinky Support",
   expiry = "12/28",
   onClick,
 }) {

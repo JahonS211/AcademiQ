@@ -37,12 +37,12 @@ export default function Navbar() {
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500 rounded-full blur-md opacity-0 group-hover:opacity-40 transition-opacity" />
             <img 
-              src="/logo.png" 
-              alt="AcademiQ" 
+              src="/logo-v2.png" 
+              alt="Thinky" 
               className="relative w-8 h-8 rounded-full object-contain bg-white shadow-sm" 
             />
           </div>
-          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{t("home") || "AcademiQ"}</span>
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{t("home") || "Thinky"}</span>
         </Link>
         
         {/* Center: Links */}

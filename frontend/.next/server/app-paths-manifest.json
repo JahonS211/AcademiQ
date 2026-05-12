@@ -1,7 +1,8 @@
 {
-  "/buy-credits/page": "app/buy-credits/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/pricing/page": "app/pricing/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/essay-generator/page": "app/essay-generator/page.js",
+  "/chat/page": "app/chat/page.js",
+  "/tools/page": "app/tools/page.js",
+  "/presentations/page": "app/presentations/page.js",
   "/(auth)/register/page": "app/(auth)/register/page.js"
 }

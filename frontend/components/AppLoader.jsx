@@ -26,7 +26,7 @@ export default function AppLoader({ loading }) {
               }}
               className="w-20 h-20 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-indigo-500/20"
             >
-              <img src="/logo.png" alt="AcademiQ" className="w-12 h-12 object-contain" />
+              <img src="/logo-v2.png" alt="Thinky" className="w-12 h-12 object-contain" />
             </motion.div>
             
             {/* Pulsing ring */}
@@ -50,7 +50,7 @@ export default function AppLoader({ loading }) {
             transition={{ delay: 0.3 }}
             className="mt-8 flex flex-col items-center"
           >
-            <h2 className="text-xl font-black tracking-tighter uppercase text-slate-900 dark:text-white">AcademiQ</h2>
+            <h2 className="text-xl font-black tracking-tighter uppercase text-slate-900 dark:text-white">Thinky</h2>
             <div className="mt-4 flex gap-1">
               {[0, 1, 2].map((i) => (
                 <motion.div

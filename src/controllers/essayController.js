@@ -39,15 +39,16 @@ FAQAT va FAQAT quyidagi JSON formatida javob bering (boshqa hech narsa yozmang):
       return res.status(503).json({ success: false, message: "AI javobi noto'g'ri formatda keldi. Iltimos qaytadan urinib ko'ring." });
     }
 
-    const savedEssay = await Essay.create({
-      userId: req.user.id || req.user._id,
+    // We no longer save to the Essay model to save space, but we update stats via deductCredits
+    const essayData = {
       topic,
       content: {
         introduction: generated.introduction,
         body: generated.body,
         conclusion: generated.conclusion,
       },
-    });
+      createdAt: new Date(),
+    };
 
     let remainingCredits = null;
     if (req.deductCredits) {
@@ -57,7 +58,7 @@ FAQAT va FAQAT quyidagi JSON formatida javob bering (boshqa hech narsa yozmang):
     return res.status(201).json({
       success: true,
       message: "Essay generated successfully",
-      essay: savedEssay,
+      essay: essayData,
       remainingCredits,
     });
   } catch (error) {
@@ -68,8 +69,8 @@ FAQAT va FAQAT quyidagi JSON formatida javob bering (boshqa hech narsa yozmang):
 
 const getMyEssays = async (req, res, next) => {
   try {
-    const essays = await Essay.find({ userId: req.user.id || req.user._id }).sort({ createdAt: -1 });
-    return res.status(200).json({ success: true, essays });
+    // Return empty list since we are no longer saving essays
+    return res.status(200).json({ success: true, essays: [] });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Failed to fetch essays" });
   }

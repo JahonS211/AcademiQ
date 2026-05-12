@@ -47,7 +47,7 @@ const toolCopy = {
     calculatorTitle: "Kalkulator",
     calculatorDesc: "Kasr, ildiz, daraja va asosiy hisob-kitoblarni tez bajaring.",
     calculatorMeta: "Bepul hisoblash",
-    mathLabTitle: "AcademiQ Math Lab",
+    mathLabTitle: "Thinky Math Lab",
     mathLabDesc: "WolframAlpha uslubida formulalar, kategoriyalar va bosqichli yechim.",
     mathLabMeta: "Formula markazi",
   },
@@ -63,7 +63,7 @@ const toolCopy = {
     calculatorTitle: "Калькулятор",
     calculatorDesc: "Быстро считайте дроби, корни, степени и базовые выражения.",
     calculatorMeta: "Бесплатный расчет",
-    mathLabTitle: "AcademiQ Math Lab",
+    mathLabTitle: "Thinky Math Lab",
     mathLabDesc: "Формулы, категории и пошаговые решения в стиле WolframAlpha.",
     mathLabMeta: "Центр формул",
   },
@@ -79,7 +79,7 @@ const toolCopy = {
     calculatorTitle: "Calculator",
     calculatorDesc: "Quickly calculate fractions, roots, powers, and basic expressions.",
     calculatorMeta: "Free calculation",
-    mathLabTitle: "AcademiQ Math Lab",
+    mathLabTitle: "Thinky Math Lab",
     mathLabDesc: "WolframAlpha-style formulas, categories, and step-by-step solutions.",
     mathLabMeta: "Formula center",
   },
@@ -428,7 +428,7 @@ export default function ToolsPage() {
       <section className="pt-8">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-brandA">AcademiQ AI</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-brandA">Thinky AI</p>
             <h2 className="text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">{t("educationalTools")}</h2>
           </div>
           <p className="max-w-md text-sm font-semibold text-slate-500 dark:text-slate-400">{copy.toolsHint}</p>

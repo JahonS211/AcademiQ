@@ -21,7 +21,7 @@ export default function AdminPanelPage() {
   const [adminChatMessages, setAdminChatMessages] = useState([
     {
       role: "assistant",
-      text: "AcademiQ admin assistant tayyor. Email yoki user ID bilan buyruq yozing: masalan, user@mail.com ga 50 credit qo'sh.",
+      text: "Thinky admin assistant tayyor. Email yoki user ID bilan buyruq yozing: masalan, user@mail.com ga 50 credit qo'sh.",
     },
   ]);
   const [adminChatInput, setAdminChatInput] = useState("");
@@ -299,7 +299,7 @@ export default function AdminPanelPage() {
                   <FiMessageSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black uppercase tracking-tight">AcademiQ Admin Assistant</h2>
+                  <h2 className="text-lg font-black uppercase tracking-tight">Thinky Admin Assistant</h2>
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Admin commands</p>
                 </div>
               </div>

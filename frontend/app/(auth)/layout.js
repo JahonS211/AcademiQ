@@ -45,7 +45,7 @@ export default function AuthLayout({ children }) {
               <FiBookOpen size={26} />
             </div>
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.34em] text-indigo-500 dark:text-indigo-300">AcademiQ</p>
+              <p className="text-xs font-black uppercase tracking-[0.34em] text-indigo-500 dark:text-indigo-300">Thinky</p>
               <h2 className="mt-2 text-3xl font-black leading-tight">Aql bilan o'qing</h2>
             </div>
           </div>

@@ -5,10 +5,10 @@ import Providers from "../components/Providers";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const metadata = {
-  title: "AcademiQ | Aql bilan o'qing",
-  description: "Zamonaviy AI student platformasi",
+  title: "Thinky - Akademik AI Asistenti",
+  description: "Insholar, prezentatsiyalar va AI asboblar bilan o'qishingizni osonlashtiring.",
   icons: {
-    icon: "/logo.png"
+    icon: "/logo-v2.png"
   }
 };
 

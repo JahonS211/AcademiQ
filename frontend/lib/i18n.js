@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const messages = {
   uz: {
-    home: "AcademiQ",
+    home: "Thinky",
     about: "Biz haqimizda",
     essay: "Insho Generatori",
     tools: "AI Asboblar",
@@ -16,13 +16,13 @@ const messages = {
     logout: "Chiqish",
     translator: "Tarjimon",
     enterText: "Matnni kiriting",
-    heroTitle: "AcademiQ — Aql bilan o'qing",
+    heroTitle: "Thinky — Aql bilan o'qing",
     heroDesc: "Insho yarating, fayllarni tahrirlang va bilimingizni AI yordamida yuksaltiring.",
     tryEssay: "Insho yaratish",
     createAccount: "Akkaunt yaratish",
     featuresTitle: "Barchasi bitta platformada",
     featuresDesc: "Talabalar uchun eng kerakli AI asboblar to'plami.",
-    footerText: "© 2026 AcademiQ. Barcha huquqlar himoyalangan.",
+    footerText: "© 2026 Thinky. Barcha huquqlar himoyalangan.",
     profileSettings: "Profil Sozlamalari",
     fullName: "Ism va Familiya",
     profilePhoto: "Profil rasmi",
@@ -145,7 +145,7 @@ const messages = {
     premiumUnlimited: "Premium Cheksiz Aktiv ✨",
   },
   ru: {
-    home: "AcademiQ",
+    home: "Thinky",
     about: "О нас",
     essay: "Генератор эссе",
     tools: "AI Инструменты",
@@ -286,7 +286,7 @@ const messages = {
     premiumUnlimited: "Premium Безлимит Активен ✨",
   },
   en: {
-    home: "AcademiQ",
+    home: "Thinky",
     about: "About Us",
     essay: "Essay Generator",
     tools: "AI Tools",

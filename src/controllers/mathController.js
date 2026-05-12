@@ -19,7 +19,7 @@ const explainMath = async (req, res, next) => {
     const localSolve = tryLocalMathSolve(prompt);
 
     const aiPrompt = `
-You are AcademiQ Math Lab, a WolframAlpha-style math assistant with Desmos expression support.
+You are Thinky Math Lab, a WolframAlpha-style math assistant with Desmos expression support.
 Answer only in ${selectedLang}.
 Solve or explain this request:
 """

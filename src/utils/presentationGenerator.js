@@ -10,7 +10,7 @@ const LANGUAGE_CONFIG = {
     name: "Uzbek Latin",
     instruction: "Write every visible title, bullet point, caption, speaker note, and slide text only in Uzbek Latin script.",
     imageLabel: "Vizual",
-    footer: "AcademiQ AI taqdimot",
+    footer: "Thinky AI taqdimot",
     slidesLabel: "slayd",
     notePrefix: "Presenter eslatmasi",
   },
@@ -18,7 +18,7 @@ const LANGUAGE_CONFIG = {
     name: "Russian",
     instruction: "Write every visible title, bullet point, caption, speaker note, and slide text only in Russian.",
     imageLabel: "Vizual",
-    footer: "AcademiQ AI prezentatsiya",
+    footer: "Thinky AI prezentatsiya",
     slidesLabel: "slaydov",
     notePrefix: "Zametka dokladchika",
   },
@@ -26,7 +26,7 @@ const LANGUAGE_CONFIG = {
     name: "English",
     instruction: "Write every visible title, bullet point, caption, speaker note, and slide text only in English.",
     imageLabel: "Visual",
-    footer: "AcademiQ AI presentation",
+    footer: "Thinky AI presentation",
     slidesLabel: "slides",
     notePrefix: "Presenter note",
   },
@@ -139,7 +139,7 @@ const fetchImageUrlAsData = async (url, source) => {
     timeout: 9000,
     maxRedirects: 5,
     headers: {
-      "User-Agent": "AcademiQ presentation generator/1.0",
+      "User-Agent": "Thinky presentation generator/1.0",
       Accept: "image/avif,image/webp,image/png,image/jpeg,*/*;q=0.8",
     },
   });
@@ -174,7 +174,7 @@ const fetchWikimediaImage = async (query) => {
       format: "json",
       origin: "*",
     },
-    headers: { "User-Agent": "AcademiQ presentation generator/1.0" },
+    headers: { "User-Agent": "Thinky presentation generator/1.0" },
   });
 
   const pages = Object.values(data?.query?.pages || {});
@@ -442,7 +442,7 @@ const generatePresentationAI = async ({ topic, language, slideCount = 7, userPla
       palette,
       index,
     });
-    return { data: svgToDataUri(svg), source: "AcademiQ AI generated visual" };
+    return { data: svgToDataUri(svg), source: "Thinky AI generated visual" };
   });
   const titleVisual = {
     data: svgToDataUri(createGeneratedSvgVisual({
@@ -452,15 +452,15 @@ const generatePresentationAI = async ({ topic, language, slideCount = 7, userPla
       palette: THEMES[0],
       index: 0,
     })),
-    source: "AcademiQ AI generated visual",
+    source: "Thinky AI generated visual",
   };
 
   const pptx = new PptxGenJS();
   pptx.layout = "LAYOUT_16x9";
-  pptx.author = "AcademiQ";
+  pptx.author = "Thinky";
   pptx.subject = topic;
   pptx.title = content.title || topic;
-  pptx.company = "AcademiQ";
+  pptx.company = "Thinky";
   pptx.lang = language || "uz";
   pptx.theme = {
     headFontFace: "Aptos Display",
@@ -474,7 +474,7 @@ const generatePresentationAI = async ({ topic, language, slideCount = 7, userPla
   titleSlide.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 7.5, fill: { color: titlePalette.bg }, line: { color: titlePalette.bg } });
   titleSlide.addShape(pptx.ShapeType.roundRect, { x: 0.55, y: 0.55, w: 4.65, h: 6.1, rectRadius: 0.12, fill: { color: titlePalette.panel }, line: { color: "E2E8F0", transparency: 15 } });
   titleSlide.addShape(pptx.ShapeType.roundRect, { x: 0.85, y: 0.95, w: 1.35, h: 0.34, rectRadius: 0.06, fill: { color: titlePalette.soft }, line: { color: titlePalette.soft } });
-  titleSlide.addText("AcademiQ", { x: 1.02, y: 1.06, w: 0.95, h: 0.12, fontSize: 7.5, bold: true, color: titlePalette.accent, align: "center", margin: 0 });
+  titleSlide.addText("Thinky", { x: 1.02, y: 1.06, w: 0.95, h: 0.12, fontSize: 7.5, bold: true, color: titlePalette.accent, align: "center", margin: 0 });
   titleSlide.addText(content.title || topic, { x: 0.86, y: 2.02, w: 3.95, h: 1.7, fontSize: 31, bold: true, color: titlePalette.text, breakLine: false, fit: "shrink" });
   if (content.subtitle) {
     titleSlide.addText(cleanText(content.subtitle, 160), { x: 0.9, y: 3.86, w: 3.75, h: 0.56, fontSize: 12.5, bold: true, color: titlePalette.muted, fit: "shrink" });

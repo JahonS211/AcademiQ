@@ -246,13 +246,11 @@ const getProfile = async (req, res, next) => {
     const user = await User.findById(req.user.id || req.user._id);
     if (!user) return res.status(404).json({ message: "User not found" });
     
-    // Calculate stats
-    const Essay = require("../models/Essay");
-    const Presentation = require("../models/Presentation");
+    // Use persistent stats from user document
     const stats = {
-      essays: await Essay.countDocuments({ userId: user._id }),
-      presentations: await Presentation.countDocuments({ userId: user._id }),
-      tools: user.totalCreditsUsed || 0,
+      essays: user.stats?.essays || 0,
+      presentations: user.stats?.presentations || 0,
+      tools: user.stats?.tools || 0,
     };
 
     return res.status(200).json({

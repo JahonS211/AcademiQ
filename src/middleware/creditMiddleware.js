@@ -1,4 +1,4 @@
-﻿const User = require("../models/User");
+const User = require("../models/User");
 const CreditHistory = require("../models/CreditHistory");
 
 const resolveCost = (cost, req) => {
@@ -62,8 +62,20 @@ const checkCredits = (cost, toolName, allowedPlans = ["free", "pro", "pro_plus"]
         if (!user.isUnlimitedCredits && actualCost > 0) {
           user.credits -= actualCost;
           user.totalCreditsUsed += actualCost;
-          await user.save();
         }
+
+        // Increment stats
+        if (!user.stats) user.stats = { essays: 0, presentations: 0, tools: 0 };
+        const toolLower = toolName.toLowerCase();
+        if (toolLower.includes("essay")) {
+          user.stats.essays += 1;
+        } else if (toolLower.includes("presentation") || toolLower.includes("slide")) {
+          user.stats.presentations += 1;
+        } else {
+          user.stats.tools += 1;
+        }
+
+        await user.save();
 
         await CreditHistory.create({
           userId: user._id,

@@ -19,13 +19,21 @@ if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-const allowedOrigins = (process.env.CORS_ORIGIN || process.env.PUBLIC_WEB_URL || "")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://academiq-production-0920.up.railway.app",
+  "https://thinky-production.up.railway.app" // Kelajakdagi yangi nom uchun
+];
 
 const corsOptions = {
-  origin: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -50,7 +58,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.get("/", (req, res) => {
-  res.json({ message: "AcademiQ backend is running" });
+  res.json({ message: "Thinky backend is running" });
 });
 
 app.get("/health", (req, res) => {
