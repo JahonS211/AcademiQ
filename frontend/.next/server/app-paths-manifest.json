@@ -1,7 +1,9 @@
 {
-  "/tools/page": "app/tools/page.js",
   "/admin/panel/page": "app/admin/panel/page.js",
+  "/page": "app/page.js",
   "/chat/page": "app/chat/page.js",
-  "/essay-generator/page": "app/essay-generator/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js"
+  "/dashboard/page": "app/dashboard/page.js",
+  "/tools/page": "app/tools/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js"
 }
