@@ -42,7 +42,7 @@ export default function Navbar() {
               className="relative w-8 h-8 rounded-full object-contain bg-white shadow-sm" 
             />
           </div>
-          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t("home") || "AcademiQ"}</span>
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tighter">{t("home") || "AcademiQ"}</span>
         </Link>
         
         {/* Center: Links */}

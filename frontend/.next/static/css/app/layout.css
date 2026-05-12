@@ -1134,6 +1134,9 @@ video {
 .w-full {
   width: 100%;
 }
+.w-\[min\(380px\2c calc\(100vw-2rem\)\)\] {
+  width: min(380px, calc(100vw - 2rem));
+}
 .min-w-0 {
   min-width: 0px;
 }

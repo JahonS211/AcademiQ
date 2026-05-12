@@ -8,7 +8,8 @@ const Support = require("../models/Support");
 const { createNotification } = require("../services/notificationService");
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "mock_token");
-const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID;
+const ADMIN_IDS = (process.env.TELEGRAM_ADMIN_ID || "").split(",").map(id => id.trim()).filter(Boolean);
+const FIRST_ADMIN = ADMIN_IDS[0];
 
 // Mock function if bot token is not valid
 let isBotReady = false;
@@ -37,7 +38,7 @@ const startTelegramBot = () => {
 };
 
 bot.start((ctx) => {
-  if (ctx.from.id.toString() === ADMIN_ID) {
+  if (ADMIN_IDS.includes(ctx.from.id.toString())) {
     ctx.reply(`Xush kelibsiz, Admin! 🚀\n\nQuyidagi menyu orqali platformani boshqarishingiz mumkin:`, 
       Markup.keyboard([
         ["💳 To'lovlar", "👥 Foydalanuvchilar"],
@@ -54,7 +55,7 @@ bot.command("id", (ctx) => {
 });
 
 const sendPaymentRequestToAdmin = async (payment, userEmail) => {
-  if (!isBotReady || !ADMIN_ID) return;
+  if (!isBotReady || ADMIN_IDS.length === 0) return;
 
   const rewardsText = payment.rewardsApplied > 0 ? `\n🎁 Ishlatilgan mukofot: ${payment.rewardsApplied} UZS` : "";
   const promoText = payment.promoCode ? `\n🎟 Promo: ${payment.promoCode} (-${payment.promoDiscountPercent}%)` : "";
@@ -77,30 +78,34 @@ const sendPaymentRequestToAdmin = async (payment, userEmail) => {
       ]),
     };
 
-    if (payment.receiptUrl) {
-      const fullPath = require("path").join(__dirname, "../../", payment.receiptUrl);
-      if (payment.receiptUrl.match(/\.(jpg|jpeg|png)$/i)) {
-        await bot.telegram.sendPhoto(ADMIN_ID, { source: fullPath }, { caption: message, ...options });
+    for (const adminId of ADMIN_IDS) {
+      if (payment.receiptUrl) {
+        const fullPath = require("path").join(__dirname, "../../", payment.receiptUrl);
+        if (payment.receiptUrl.match(/\.(jpg|jpeg|png)$/i)) {
+          await bot.telegram.sendPhoto(adminId, { source: fullPath }, { caption: message, ...options }).catch(e => console.error(`Error sending photo to ${adminId}:`, e));
+        } else {
+          await bot.telegram.sendDocument(adminId, { source: fullPath }, { caption: message, ...options }).catch(e => console.error(`Error sending doc to ${adminId}:`, e));
+        }
       } else {
-        await bot.telegram.sendDocument(ADMIN_ID, { source: fullPath }, { caption: message, ...options });
+        await bot.telegram.sendMessage(adminId, message, options).catch(e => console.error(`Error sending msg to ${adminId}:`, e));
       }
-    } else {
-      await bot.telegram.sendMessage(ADMIN_ID, message, options);
     }
   } catch (error) {
-    console.error("Error sending message to admin:", error);
+    console.error("Error sending message to admins:", error);
   }
 };
 
 const sendSupportMessageToAdmin = async (userEmail, text) => {
-  if (!isBotReady || !ADMIN_ID) return;
+  if (!isBotReady || ADMIN_IDS.length === 0) return;
   const message = `
 📩 <b>Yangi Support Xabari!</b>
 
 👤 Kimdan: ${userEmail}
 💬 Xabar: ${text}
   `;
-  await bot.telegram.sendMessage(ADMIN_ID, message, { parse_mode: "HTML" });
+  for (const adminId of ADMIN_IDS) {
+    await bot.telegram.sendMessage(adminId, message, { parse_mode: "HTML" }).catch(e => console.error(`Error sending support to ${adminId}:`, e));
+  }
 };
 
 // --- Shared Logic Functions ---
@@ -323,6 +328,13 @@ bot.action(/approve_(.+)/, async (ctx) => {
     if (user) {
       if (payment.type === "plan") {
         user.planType = payment.plan;
+        // Add credits based on plan
+        if (payment.plan === "pro") {
+          user.credits = Number(user.credits || 0) + 150;
+        } else if (payment.plan === "pro_plus") {
+          user.credits = Number(user.credits || 0) + 500;
+        }
+        
         // Extend subscription by 30 days from now (or from existing end date)
         const base = user.subscriptionEndsAt && user.subscriptionEndsAt > new Date() ? user.subscriptionEndsAt : new Date();
         user.subscriptionEndsAt = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);

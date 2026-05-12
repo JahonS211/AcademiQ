@@ -72,6 +72,17 @@ export default function PricingPage() {
     }
   };
 
+  useEffect(() => {
+    const savedPayment = localStorage.getItem("activePayment");
+    if (savedPayment) {
+      const parsed = JSON.parse(savedPayment);
+      setPaymentInfo(parsed);
+      setShowModal(true);
+      if (parsed.receiptUploaded) setIsReceiptUploaded(true);
+      startPolling(parsed.code);
+    }
+  }, []);
+
   const handleSubscribe = async (plan, price, overrideRewards = useRewards) => {
     if (price === 0) return;
     const token = localStorage.getItem("token");
@@ -87,14 +98,19 @@ export default function PricingPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
-      setPaymentInfo(data.payment);
+      const newPayment = data.payment;
+      setPaymentInfo(newPayment);
       setShowModal(true);
       setIsReceiptUploaded(false);
       setIsPaid(false);
       setSelectedFile(null);
       setRewardsInfo(null);
-      recalcRewards(data.payment.amount);
-      startPolling(data.payment.code);
+      
+      // Persist
+      localStorage.setItem("activePayment", JSON.stringify({ ...newPayment, receiptUploaded: false }));
+      
+      recalcRewards(newPayment.amount);
+      startPolling(newPayment.code);
     } catch (err) {
       toast.error(err.response?.data?.message || "Xatolik yuz berdi");
     } finally {
@@ -116,6 +132,8 @@ export default function PricingPage() {
           toast.success("To'lov tasdiqlandi!");
           clearInterval(interval);
           
+          localStorage.removeItem("activePayment");
+          
           const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
           const updatedUser = { ...savedUser, planType: data.payment?.plan || "pro" };
           localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -127,6 +145,7 @@ export default function PricingPage() {
         } else if (data.status === "rejected") {
           toast.error("To'lov bekor qilindi.");
           clearInterval(interval);
+          localStorage.removeItem("activePayment");
           setShowModal(false);
         }
       } catch (err) {
@@ -175,6 +194,8 @@ export default function PricingPage() {
       });
       toast.success("Chek yuklandi! Admin tasdig'i kutilmoqda.");
       setIsReceiptUploaded(true);
+      const saved = JSON.parse(localStorage.getItem("activePayment") || "{}");
+      localStorage.setItem("activePayment", JSON.stringify({ ...saved, receiptUploaded: true }));
     } catch (err) {
       toast.error("Yuklashda xatolik yuz berdi");
     } finally {
@@ -553,10 +574,13 @@ export default function PricingPage() {
                   )}
 
                   <button
-                    onClick={() => setShowModal(false)}
+                    onClick={() => {
+                      setShowModal(false);
+                      localStorage.removeItem("activePayment");
+                    }}
                     className="w-full py-2 text-slate-400 text-[8px] font-black uppercase tracking-widest hover:text-slate-600 transition-colors"
                   >
-                    {t("no")}
+                    YOPISH
                   </button>
                 </div>
               </div>

@@ -121,7 +121,7 @@ export default function NotificationsDropdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-full left-0 mb-4 w-[min(350px,calc(100vw-2rem))] rounded-[24px] overflow-hidden z-[9999] shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+            className="absolute top-full right-0 mt-4 w-[min(380px,calc(100vw-2rem))] rounded-[24px] overflow-hidden z-[9999] shadow-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
               <div className="flex items-center gap-2">

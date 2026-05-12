@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app\\\\admin\\\\panel\\\\page.js -> ../../../lib/api\":{\"id\":\"app\\\\admin\\\\panel\\\\page.js -> ../../../lib/api\",\"files\":[\"static/chunks/_app-pages-browser_lib_api_js.js\"]}}"
+self.__REACT_LOADABLE_MANIFEST="{}"

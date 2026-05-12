@@ -25,18 +25,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || process.env.PUBLIC_WEB_URL ||
   .filter(Boolean);
 
 const corsOptions = {
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.length === 0 ||
-      allowedOrigins.includes(origin) ||
-      /^https?:\/\/localhost:\d+$/i.test(origin) ||
-      /^https?:\/\/127\.0\.0\.1:\d+$/i.test(origin)
-    ) {
-      return callback(null, true);
-    }
-    return callback(null, true);
-  },
+  origin: true,
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
